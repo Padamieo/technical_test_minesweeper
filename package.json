@@ -1,0 +1,17 @@
+{
+  "name": "minesweeper",
+  "version": "0.0.1",
+  "description": "something about a test",
+  "author": "Michaél Adam Lockwood",
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-contrib-copy": "*",
+    "grunt-contrib-uglify": "*",
+    "grunt-contrib-watch": "*",
+    "grunt-browser-sync": "*",
+    "load-grunt-tasks": "*"
+  },
+  "dependencies": {
+    "pixi.js": "^4.5.4"
+  }
+}
