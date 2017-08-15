@@ -11,7 +11,12 @@
     <script>document.documentElement.className = 'js';</script>
   </head>
   <body>
-    <div id="menu"><p>hello</p></div>
+    <div id="menu" style="display: none;">
+      <a id="unique" class="button" href="#game"><span>Start</span></a>
+      <!-- start, timeattack, difficulty, grid size -->
+    </div>
   </body>
   <script src="app.js"></script>
+  <script>document.write('<script src="//' + window.location.hostname + ':1337/livereload.js"><\/script>');</script>
+
 </html>

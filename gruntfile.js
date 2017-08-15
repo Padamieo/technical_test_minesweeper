@@ -16,6 +16,8 @@ module.exports = function(grunt){
         files:{
           'build/app.js': [
             'node_modules/pixi.js/dist/pixi.js',
+						'node_modules/jquery/dist/jquery.js',
+						'src/js/game.js',
 						'src/js/index.js'
           ]
         }
@@ -26,7 +28,7 @@ module.exports = function(grunt){
       build:{
         files:[{
           cwd: 'src/',
-          src: ['**', '!**/js/*.js', '!**/*.{jpg,png,less}'],
+          src: ['**', '!**/js/*.js'],
           dest: 'build/',
           nonull: false,
           expand: true,

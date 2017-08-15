@@ -11,7 +11,16 @@
     "grunt-browser-sync": "*",
     "load-grunt-tasks": "*"
   },
+  "browser": {
+    "game": "src/game.js"
+  },
+  "browserify-shim": {
+    "game": {
+      "exports": "game"
+    }
+  },
   "dependencies": {
+    "jquery": "^3.2.1",
     "pixi.js": "^4.5.4"
   }
 }
