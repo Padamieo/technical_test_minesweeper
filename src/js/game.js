@@ -62,22 +62,37 @@ function game(){
   this.setupGame = function( data ){
     console.log("setupGame");
 
+    var data = [
+      [ 0,0,0,1 ],
+      [ 0,0,0,0 ],
+      [ 0,1,0,0 ],
+      [ 0,1,0,1 ]
+    ];
+    this.field = data;
+
     this.container = new PIXI.Container();
 
-    var placeholder = PIXI.Texture.fromFrame("grass");
+    for(var r = 0; r < this.field.length; r++ ){
+      for(var c = 0; c < this.field[r].length; c++ ){
+        this.addSprite( r, c );
+      }
+    }
 
-    // for(var r = 0; r < data.length; r++ ){
-    //   for(var c = 0; c < data[r].length; c++ ){
-    //     //console.log(data[r][c]);
-    //   }
-    // }
-
-    // following will be in the loop
-    var temp = new PIXI.Sprite(placeholder);
-    temp.anchor.set(0.5);
-
+    this.container.pivot.x = this.container.width / 2;
+    this.container.pivot.y = this.container.height / 2;
     this.container.x = this.canvas.renderer.width / 2;
     this.container.y = this.canvas.renderer.height / 2;
+
+    this.canvas.stage.addChild(this.container);
+  },
+
+  this.addSprite = function( r, c ){
+    var placeholder = PIXI.Texture.fromFrame("grass");
+    // following will be in the loop
+    var temp = new PIXI.Sprite(placeholder);
+
+    temp.x = (c % 4) * 50;
+    temp.y = (r % 4) * 50;
 
     // Opt-in to interactivity
     temp.interactive = true;
@@ -85,25 +100,46 @@ function game(){
     // Shows hand cursor
     temp.buttonMode = true;
 
-    temp.data = "bomb";
+    if( this.field[r][c] != 0 ){
+      temp.bomb = true;
+    }else{
+      temp.bomb = false;
+      var s = this.calculateNeighbourSum( r, c );
+      temp.data = s;
+    }
 
     if(!this.mobile){
       temp.on('click', this.onClick);
     }else{
 
     }
-
     this.container.addChild(temp);
-    this.canvas.stage.addChild(this.container);
+  },
+
+  this.calculateNeighbourSum = function( r, c ){
+    var neighbors = Array2D.neighbors(this.field, r, c );
+    var sum = 0;
+    for(var i = 0; i < neighbors.length; i++ ){
+      if( neighbors[i] != undefined ){
+        sum = sum + neighbors[i];
+      }
+    }
+    return sum;
   },
 
   this.onClick = function() {
-      console.log("click");
-      this.scale.x *= 1.25;
-      this.scale.y *= 1.25;
-      // if( this.data == "bomb" ){
-      //   console.log( "boom" );
-      // }
+      var newTexture = PIXI.Texture.fromFrame("dirt");
+      if(this.bomb){
+        console.log("boom trigger end of game");
+        newTexture = PIXI.Texture.fromFrame("bomb");
+      }else{
+        if( this.data != 0 ){
+          var n = (this.data > 3 ? 3 : this.data );
+          newTexture = PIXI.Texture.fromFrame(n);
+        }
+      }
+      // may want animation, then reveal
+      this.texture = newTexture;
   }
 
 };

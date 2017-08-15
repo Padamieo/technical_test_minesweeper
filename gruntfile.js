@@ -16,6 +16,7 @@ module.exports = function(grunt){
         files:{
           'build/app.js': [
             'node_modules/pixi.js/dist/pixi.js',
+						'node_modules/array2d/Array2D.js',
 						'node_modules/jquery/dist/jquery.js',
 						'src/js/game.js',
 						'src/js/index.js'

@@ -1,4 +1,4 @@
-/*minesweeper V0.0.1 made on 2017-08-14*/
+/*minesweeper V0.0.1 made on 2017-08-15*/
 
 function game() {
     this.init = function(mobile) {
@@ -24,13 +24,32 @@ function game() {
             !1;
         };
     }, this.setupGame = function(data) {
-        console.log("setupGame"), this.container = new PIXI.Container();
+        console.log("setupGame");
+        var data = [ [ 0, 0, 0, 1 ], [ 0, 0, 0, 0 ], [ 0, 1, 0, 0 ], [ 0, 1, 0, 1 ] ];
+        this.field = data, this.container = new PIXI.Container();
+        for (var r = 0; r < this.field.length; r++) for (var c = 0; c < this.field[r].length; c++) this.addSprite(r, c);
+        this.container.pivot.x = this.container.width / 2, this.container.pivot.y = this.container.height / 2, 
+        this.container.x = this.canvas.renderer.width / 2, this.container.y = this.canvas.renderer.height / 2, 
+        this.canvas.stage.addChild(this.container);
+    }, this.addSprite = function(r, c) {
         var placeholder = PIXI.Texture.fromFrame("grass"), temp = new PIXI.Sprite(placeholder);
-        temp.anchor.set(.5), this.container.x = this.canvas.renderer.width / 2, this.container.y = this.canvas.renderer.height / 2, 
-        temp.interactive = !0, temp.buttonMode = !0, temp.data = "bomb", this.mobile || temp.on("click", this.onClick), 
-        this.container.addChild(temp), this.canvas.stage.addChild(this.container);
+        if (temp.x = c % 4 * 50, temp.y = r % 4 * 50, temp.interactive = !0, temp.buttonMode = !0, 
+        0 != this.field[r][c]) temp.bomb = !0; else {
+            temp.bomb = !1;
+            var s = this.calculateNeighbourSum(r, c);
+            temp.data = s;
+        }
+        this.mobile || temp.on("click", this.onClick), this.container.addChild(temp);
+    }, this.calculateNeighbourSum = function(r, c) {
+        for (var neighbors = Array2D.neighbors(this.field, r, c), sum = 0, i = 0; i < neighbors.length; i++) void 0 != neighbors[i] && (sum += neighbors[i]);
+        return sum;
     }, this.onClick = function() {
-        console.log("click"), this.scale.x *= 1.25, this.scale.y *= 1.25;
+        var newTexture = PIXI.Texture.fromFrame("dirt");
+        if (this.bomb) console.log("boom trigger end of game"), newTexture = PIXI.Texture.fromFrame("bomb"); else if (0 != this.data) {
+            var n = this.data > 3 ? 3 : this.data;
+            newTexture = PIXI.Texture.fromFrame(n);
+        }
+        this.texture = newTexture;
     };
 }
 
@@ -12617,7 +12636,774 @@ function game() {
             "./prepare": 184
         } ]
     }, {}, [ 188 ])(188);
-}), function(global, factory) {
+}), function() {
+    function isArray(thing) {
+        return "[object Array]" === Object.prototype.toString.call(thing);
+    }
+    function isNull(thing) {
+        return null === thing;
+    }
+    function isUndefined(thing) {
+        return void 0 === thing;
+    }
+    function isBlank(thing) {
+        return isNull(thing) || isUndefined(thing);
+    }
+    function isPresent(thing) {
+        return !isBlank(thing);
+    }
+    function isExistent(thing) {
+        return !isUndefined(thing);
+    }
+    function cloneArray(array) {
+        for (var clone = [], i = 0, l = array.length; i < l; i++) clone[i] = array[i];
+        return clone;
+    }
+    function _findContiguous(cell, r, c, grid, w, h, contiguous, checked, finder, countDiagonals, group) {
+        if (!_hasChecked(checked, r, c) && (checked[r] || (checked[r] = []), checked[r][c] = !0, 
+        c > -1 && c < w && r > -1 && r < h && finder(cell, r, c, grid))) {
+            group || (group = [], contiguous.push(group)), group.push([ r, c ]);
+            var up = r - 1, down = r + 1, left = c - 1, right = c + 1;
+            up > -1 && up < h && _findContiguous(grid[up][c], up, c, grid, w, h, contiguous, checked, finder, countDiagonals, group), 
+            down > -1 && down < h && _findContiguous(grid[down][c], down, c, grid, w, h, contiguous, checked, finder, countDiagonals, group), 
+            left > -1 && left < w && _findContiguous(grid[r][left], r, left, grid, w, h, contiguous, checked, finder, countDiagonals, group), 
+            right > -1 && right < w && _findContiguous(grid[r][right], r, right, grid, w, h, contiguous, checked, finder, countDiagonals, group), 
+            countDiagonals && (up > -1 && up < h && left > -1 && left < w && _findContiguous(grid[up][left], up, left, grid, w, h, contiguous, checked, finder, countDiagonals, group), 
+            up > -1 && up < h && right > -1 && right < w && _findContiguous(grid[up][right], up, right, grid, w, h, contiguous, checked, finder, countDiagonals, group), 
+            down > -1 && down < h && left > -1 && left < w && _findContiguous(grid[down][left], down, left, grid, w, h, contiguous, checked, finder, countDiagonals, group), 
+            down > -1 && down < h && right > -1 && right < w && _findContiguous(grid[down][right], down, right, grid, w, h, contiguous, checked, finder, countDiagonals, group));
+        }
+    }
+    function _hasChecked(checked, r, c) {
+        return checked[r] && !0 === checked[r][c];
+    }
+    var root = this, previousArray2D = root.Array2D, Array2D = function() {
+        if (!(this instanceof Array2D)) return new Array2D();
+    };
+    "undefined" != typeof exports ? ("undefined" != typeof module && module.exports && (exports = module.exports = Array2D), 
+    exports.Array2D = Array2D) : root.Array2D = Array2D, Array2D.VERSION = "0.0.5", 
+    Array2D.noConflict = function() {
+        return root.Array2D = previousArray2D, this;
+    }, Array2D.AXES = {
+        X: 1,
+        Y: 2
+    }, Array2D.BEARINGS = {
+        NORTH: 1,
+        NORTHWEST: 2,
+        NORTHEAST: 3,
+        SOUTH: 4,
+        SOUTHWEST: 5,
+        SOUTHEAST: 6,
+        EAST: 7,
+        WEST: 8
+    }, Array2D.BOUNDARIES = {
+        UPPER: 1,
+        LOWER: 2,
+        LEFT: 3,
+        RIGHT: 4
+    }, Array2D.CORNERS = {
+        TOP_LEFT: 1,
+        TOP_RIGHT: 2,
+        BOTTOM_LEFT: 3,
+        BOTTOM_RIGHT: 4
+    }, Array2D.CROOKS = {
+        UPPER_LEFT: 1,
+        UPPER_RIGHT: 2,
+        LOWER_LEFT: 3,
+        LOWER_RIGHT: 4
+    }, Array2D.DIRECTIONS = {
+        UP: 1,
+        DOWN: 2,
+        LEFT: 3,
+        RIGHT: 4
+    }, Array2D.EDGES = {
+        TOP: 1,
+        BOTTOM: 2,
+        LEFT: 3,
+        RIGHT: 4
+    }, Array2D.QUADRANTS = {
+        I: 1,
+        II: 2,
+        III: 3,
+        IV: 4
+    }, Array2D.get = function(grid, r, c) {
+        if (isArray(grid[r])) return grid[r][c];
+    }, Array2D.set = function(grid, r, c, value) {
+        var clone = Array2D.clone(grid);
+        return isArray(clone[r]) || (clone[r] = []), clone[r][c] = value, clone;
+    }, Array2D.width = function(grid) {
+        return Array2D.widest(grid).length;
+    }, Array2D.height = function(grid) {
+        return Array2D.tallest(grid).length;
+    }, Array2D.dimensions = function(grid) {
+        for (var h = 0, w = 0, i = 0, rs = grid.length; i < rs; i++) {
+            var l = grid[i].length;
+            l > 0 && (h = i + 1), l > w && (w = l);
+        }
+        return [ w, h ];
+    }, Array2D.area = function(grid) {
+        return Array2D.width(grid) * Array2D.height(grid);
+    }, Array2D.cells = function(grid) {
+        for (var count = 0, i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) isExistent(row[j]) && count++;
+        return count;
+    }, Array2D.crop = function(grid, r, c, w, h) {
+        for (var out = [], width = Array2D.width(grid), height = Array2D.height(grid), i = 0; i < h; i++) {
+            var ro = r + i;
+            if (ro < height && ro >= 0) {
+                out.push([]);
+                for (var j = 0; j < w; j++) {
+                    var co = c + j;
+                    if (co < width && co >= 0) {
+                        var last = out[out.length - 1], cell = grid[ro][co];
+                        last.push(cell);
+                    }
+                }
+            }
+        }
+        return out;
+    }, Array2D.harvest = function(grid, r, c, w, h) {
+        for (var out = [], width = Array2D.width(grid), height = Array2D.height(grid), i = 0; i < h; i++) {
+            out[i] = [];
+            for (var j = 0; j < w; j++) {
+                var ro = r + i, co = c + j;
+                if (ro >= height || ro < 0) out[i][j] = null; else if (co >= width || co < 0) out[i][j] = null; else {
+                    var cell = grid[ro][co];
+                    out[i][j] = cell;
+                }
+            }
+        }
+        return out;
+    }, Array2D.rotate = function(grid, direction) {
+        if (direction === Array2D.DIRECTIONS.LEFT) return Array2D.lrotate(grid);
+        if (direction === Array2D.DIRECTIONS.RIGHT) return Array2D.rrotate(grid);
+        throw "Array2D.js: Invalid direction provided for `rotate`";
+    }, Array2D.lrotate = function(grid) {
+        var transposed = Array2D.transpose(grid);
+        return Array2D.vflip(transposed);
+    }, Array2D.rrotate = function(grid) {
+        var transposed = Array2D.transpose(grid);
+        return Array2D.hflip(transposed);
+    }, Array2D.flip = function(grid, axis) {
+        if (axis === Array2D.AXES.X) return Array2D.vflip(grid);
+        if (axis === Array2D.AXES.Y) return Array2D.hflip(grid);
+        throw "Array2D.js: Invalid axis provided for `flip`";
+    }, Array2D.vflip = function(grid) {
+        for (var out = [], i = 0, l = grid.length; i < l; i++) {
+            var opp = i - l + 1;
+            out[i] = grid[Math.abs(opp)];
+        }
+        return out;
+    }, Array2D.hflip = function(grid) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            out[i] = [];
+            for (var j = 0, l2 = grid[i].length; j < l2; j++) {
+                var opp = j - l2 + 1;
+                out[i][j] = grid[i][Math.abs(opp)];
+            }
+        }
+        return out;
+    }, Array2D.pan = function(grid, direction, steps) {
+        switch (direction) {
+          case Array2D.DIRECTIONS.LEFT:
+            return Array2D.lpan(grid, steps);
+
+          case Array2D.DIRECTIONS.RIGHT:
+            return Array2D.rpan(grid, steps);
+
+          case Array2D.DIRECTIONS.UP:
+            return Array2D.upan(grid, steps);
+
+          case Array2D.DIRECTIONS.DOWN:
+            return Array2D.dpan(grid, steps);
+
+          default:
+            throw "Array2D.js: Invalid direction provided for `pan`";
+        }
+    }, Array2D.upan = function(grid, steps) {
+        var panned = Array2D.clone(grid);
+        for (steps || (steps = 1); steps > 0; ) {
+            var last = panned.pop();
+            panned.unshift(last), steps--;
+        }
+        return panned;
+    }, Array2D.lpan = function(grid, steps) {
+        var transposed = Array2D.transpose(grid), shifted = Array2D.upan(transposed, steps);
+        return Array2D.transpose(shifted);
+    }, Array2D.dpan = function(grid, steps) {
+        var panned = Array2D.clone(grid);
+        for (steps || (steps = 1); steps > 0; ) {
+            var first = panned.shift();
+            panned.push(first), steps--;
+        }
+        return panned;
+    }, Array2D.rpan = function(grid, steps) {
+        var transposed = Array2D.transpose(grid), shifted = Array2D.dpan(transposed, steps);
+        return Array2D.transpose(shifted);
+    }, Array2D.slide = function(grid, direction, steps) {
+        switch (direction) {
+          case Array2D.DIRECTIONS.LEFT:
+            return Array2D.lslide(grid, steps);
+
+          case Array2D.DIRECTIONS.RIGHT:
+            return Array2D.rslide(grid, steps);
+
+          case Array2D.DIRECTIONS.UP:
+            return Array2D.uslide(grid, steps);
+
+          case Array2D.DIRECTIONS.DOWN:
+            return Array2D.dslide(grid, steps);
+
+          default:
+            throw "Array2D.js: Invalid direction provided for `slide`";
+        }
+    }, Array2D.rslide = function(grid, steps) {
+        return Array2D.lpan(grid, steps);
+    }, Array2D.lslide = function(grid, steps) {
+        return Array2D.rpan(grid, steps);
+    }, Array2D.dslide = function(grid, steps) {
+        return Array2D.upan(grid, steps);
+    }, Array2D.uslide = function(grid, steps) {
+        return Array2D.dpan(grid, steps);
+    }, Array2D.transpose = function(grid) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) out[j] || (out[j] = []), 
+        out[j][i] = row[j];
+        return out;
+    }, Array2D.antitranspose = function(grid) {
+        var rotated = Array2D.rrotate(grid);
+        return Array2D.vflip(rotated);
+    }, Array2D.fill = function(grid, value) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            var row = grid[i];
+            out[i] = [];
+            for (var j = 0, l2 = row.length; j < l2; j++) out[i][j] = value;
+        }
+        return out;
+    }, Array2D.fillArea = function(grid, r, c, w, h, value) {
+        var built = Array2D.build(w, h, value);
+        return Array2D.paste(grid, built, r, c);
+    }, Array2D.pad = function(grid, side, times, value) {
+        switch (side) {
+          case Array2D.EDGES.TOP:
+            return Array2D.upad(grid, times, value);
+
+          case Array2D.EDGES.BOTTOM:
+            return Array2D.dpad(grid, times, value);
+
+          case Array2D.EDGES.LEFT:
+            return Array2D.lpad(grid, times, value);
+
+          case Array2D.EDGES.RIGHT:
+            return Array2D.rpad(grid, times, value);
+
+          default:
+            throw "Array2D.js: Invalid side provided for `pad`";
+        }
+    }, Array2D.upad = function(grid, times, value) {
+        for (var out = [], d = Array2D.dimensions(grid), w = d[0], h = d[1], i = -times; i < h; i++) {
+            var r = i + times;
+            out[r] = [];
+            for (var j = 0; j < w; j++) i > -1 ? out[r][j] = grid[i][j] : isUndefined(value) ? out[r][j] = null : out[r][j] = value;
+        }
+        return out;
+    }, Array2D.dpad = function(grid, times, value) {
+        for (var out = [], d = Array2D.dimensions(grid), w = d[0], h = d[1], i = 0; i < h + times; i++) {
+            out[i] = [];
+            for (var j = 0; j < w; j++) i < h ? out[i][j] = grid[i][j] : isUndefined(value) ? out[i][j] = null : out[i][j] = value;
+        }
+        return out;
+    }, Array2D.lpad = function(grid, times, value) {
+        for (var out = [], d = Array2D.dimensions(grid), w = d[0], h = d[1], i = 0; i < h; i++) {
+            out[i] = [];
+            for (var j = -times; j < w; j++) {
+                var c = j + times;
+                j > -1 ? out[i][c] = grid[i][j] : isUndefined(value) ? out[i][c] = null : out[i][c] = value;
+            }
+        }
+        return out;
+    }, Array2D.rpad = function(grid, times, value) {
+        for (var out = [], d = Array2D.dimensions(grid), w = d[0], h = d[1], i = 0; i < h; i++) {
+            out[i] = [];
+            for (var j = 0; j < w + times; j++) j < w ? out[i][j] = grid[i][j] : isUndefined(value) ? out[i][j] = null : out[i][j] = value;
+        }
+        return out;
+    }, Array2D.trim = function(grid, side, num) {
+        switch (side) {
+          case Array2D.EDGES.TOP:
+            return Array2D.utrim(grid, num);
+
+          case Array2D.EDGES.BOTTOM:
+            return Array2D.dtrim(grid, num);
+
+          case Array2D.EDGES.LEFT:
+            return Array2D.ltrim(grid, num);
+
+          case Array2D.EDGES.RIGHT:
+            return Array2D.rtrim(grid, num);
+
+          default:
+            throw "Array2D.js: Invalid edge provided for `trim`";
+        }
+    }, Array2D.utrim = function(grid, num) {
+        var out = [];
+        num || (num = 1);
+        for (var i = num, l = grid.length; i < l; i++) out[i - num] = cloneArray(grid[i]);
+        return out;
+    }, Array2D.dtrim = function(grid, num) {
+        var out = [];
+        num || (num = 1);
+        for (var i = 0, l = grid.length - num; i < l; i++) out[i] = cloneArray(grid[i]);
+        return out;
+    }, Array2D.ltrim = function(grid, num) {
+        var out = [];
+        num || (num = 1);
+        for (var i = 0, l1 = grid.length; i < l1; i++) {
+            out[i] = [];
+            for (var row = grid[i], j = num, l2 = row.length; j < l2; j++) out[i][j - num] = row[j];
+        }
+        return out;
+    }, Array2D.rtrim = function(grid, num) {
+        var out = [];
+        num || (num = 1);
+        for (var i = 0, l1 = grid.length; i < l1; i++) {
+            out[i] = [];
+            for (var row = grid[i], j = 0, l2 = row.length - num; j < l2; j++) out[i][j] = row[j];
+        }
+        return out;
+    }, Array2D.stitch = function(grid1, grid2, edge) {
+        switch (edge) {
+          case Array2D.EDGES.TOP:
+            return Array2D.ustitch(grid1, grid2);
+
+          case Array2D.EDGES.BOTTOM:
+            return Array2D.dstitch(grid1, grid2);
+
+          case Array2D.EDGES.LEFT:
+            return Array2D.lstitch(grid1, grid2);
+
+          case Array2D.EDGES.RIGHT:
+            return Array2D.rstitch(grid1, grid2);
+
+          default:
+            throw "Array2D.js: Invalid edge provided for `stitch`";
+        }
+    }, Array2D.ustitch = function(grid1, grid2) {
+        var h = Array2D.dimensions(grid2)[1];
+        return Array2D.glue(grid1, grid2, -h, 0);
+    }, Array2D.dstitch = function(grid1, grid2) {
+        var h = Array2D.dimensions(grid1)[1];
+        return Array2D.glue(grid1, grid2, h, 0);
+    }, Array2D.lstitch = function(grid1, grid2) {
+        var w = Array2D.dimensions(grid2)[0];
+        return Array2D.glue(grid1, grid2, 0, -w);
+    }, Array2D.rstitch = function(grid1, grid2) {
+        var w = Array2D.dimensions(grid1)[0];
+        return Array2D.glue(grid1, grid2, 0, w);
+    }, Array2D.paste = function(grid1, grid2, sr, sc) {
+        for (var out = [], i = 0, l1 = grid1.length; i < l1; i++) {
+            out[i] = [];
+            for (var rlen = grid1[i].length, tr = i - sr, j = 0; j < rlen; j++) {
+                var tc = j - sc;
+                isArray(grid2[tr]) && !isUndefined(grid2[tr][tc]) && i >= sr && j >= sc && tr < l1 && tc < rlen ? out[i][j] = grid2[tr][tc] : out[i][j] = grid1[i][j];
+            }
+        }
+        return out;
+    }, Array2D.glue = function(grid1, grid2, r, c) {
+        var d1 = Array2D.dimensions(grid1), d2 = Array2D.dimensions(grid2), mw = d1[0] > d2[0] ? d1[0] : d2[0], mh = d1[1] > d2[1] ? d1[1] : d2[1], w = Math.abs(c) + mw, h = Math.abs(r) + mh, n = Array2D.build(w, h), r1 = r < 0 ? -r : 0, c1 = c < 0 ? -c : 0, o = Array2D.paste(n, grid1, r1, c1), r2 = r > 0 ? r : 0, c2 = c > 0 ? c : 0;
+        return Array2D.paste(o, grid2, r2, c2);
+    }, Array2D.shuffle = function(grid) {
+        for (var rowLens = [], i = 0, l = grid.length; i < l; i++) rowLens.push(grid[i].length);
+        for (var shuffled = Array2D.flatten(grid), i = shuffled.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1)), t = shuffled[i];
+            shuffled[i] = shuffled[j], shuffled[j] = t;
+        }
+        for (var out = [], i = 0, l = rowLens.length; i < l; i++) {
+            for (var row = [], rowLen = rowLens[i]; rowLen--; ) row.push(shuffled.pop());
+            out.push(row);
+        }
+        return out;
+    }, Array2D.tidy = function(grid) {
+        for (var out = [], width = Array2D.width(grid), height = Array2D.height(grid), i = 0, l1 = width; i < l1; i++) {
+            out[i] = [];
+            for (var j = 0, l2 = height; j < l2; j++) {
+                var previous = Array2D.get(grid, i, j);
+                isUndefined(previous) ? out[i][j] = null : out[i][j] = previous;
+            }
+        }
+        return out;
+    }, Array2D.clone = function(grid) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            out[i] = [];
+            for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) {
+                var cell = row[j];
+                out[i][j] = cell;
+            }
+        }
+        return out;
+    }, Array2D.build = function(w, h, value) {
+        var out = [];
+        isUndefined(value) && (value = null);
+        for (var i = 0, l1 = h; i < l1; i++) {
+            out[i] = [];
+            for (var j = 0, l2 = w; j < l2; j++) out[i][j] = value;
+        }
+        return out;
+    }, Array2D.buildWith = function(w, h, fn) {
+        for (var out = [], i = 0, l1 = h; i < l1; i++) {
+            out[i] = [];
+            for (var j = 0, l2 = w; j < l2; j++) out[i][j] = fn ? fn(i, j, out) : null;
+        }
+        return out;
+    }, Array2D.serialize = function(grid) {
+        return JSON.stringify(grid);
+    }, Array2D.nullify = function(grid) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            out[i] = [];
+            for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) isExistent(row[j]) && (out[i][j] = null);
+        }
+        return out;
+    }, Array2D.integerize = function(grid) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            out[i] = [];
+            for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) {
+                var cell = row[j];
+                out[i][j] = parseInt(cell);
+            }
+        }
+        return out;
+    }, Array2D.stringize = function(grid) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            out[i] = [];
+            for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) {
+                var cell = row[j];
+                out[i][j] = String(cell);
+            }
+        }
+        return out;
+    }, Array2D.check = function(o) {
+        return !!isArray(o) && !!isArray(o[0]);
+    }, Array2D.ragged = function(grid) {
+        var widest = Array2D.widest(grid), thinnest = Array2D.thinnest(grid);
+        return widest.length !== thinnest.length;
+    }, Array2D.rectangular = function(grid) {
+        return !Array2D.ragged(grid);
+    }, Array2D.empty = function(grid) {
+        return grid.length < 1 || 1 === grid.length && grid[0].length < 1;
+    }, Array2D.blank = function(grid) {
+        var blank = !0;
+        if (Array2D.empty(grid)) return !0;
+        for (var i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) isBlank(row[j]) || (blank = !1);
+        return blank;
+    }, Array2D.singular = function(grid) {
+        var width = Array2D.width(grid), height = Array2D.height(grid);
+        return 1 === width && 1 === height;
+    }, Array2D.multitudinous = function(grid) {
+        return !Array2D.singular(grid);
+    }, Array2D.sparse = function(grid) {
+        for (var sparse = !1, i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) isBlank(row[j]) && (sparse = !0);
+        return sparse;
+    }, Array2D.dense = function(grid) {
+        return !Array2D.sparse(grid);
+    }, Array2D.same = function(grid1, grid2) {
+        var w1 = Array2D.width(grid1), h1 = Array2D.height(grid1), w2 = Array2D.width(grid2), h2 = Array2D.height(grid2);
+        if (w1 !== w2) return !1;
+        if (h1 !== h2) return !1;
+        for (var i = 0; i < w1; i++) for (var j = 0; j < w2; j++) if (grid1[i][j] !== grid2[i][j]) return !1;
+        return !0;
+    }, Array2D.different = function(grid1, grid2) {
+        return !Array2D.same(grid1, grid2);
+    }, Array2D.diff = function(grid1, grid2) {
+        for (var diffs = [], d1 = Array2D.dimensions(grid1), d2 = Array2D.dimensions(grid2), w = d1[0] > d2[0] ? d1[0] : d2[0], h = (d1[1], 
+        d2[1], d2[1]), i = 0; i < h; i++) for (var row1 = grid1[i], row2 = grid2[i], row1isArray = isArray(row1), row2isArray = isArray(row2), j = 0; j < w; j++) row1isArray && row2isArray ? row1[j] !== row2[j] && diffs.push([ i, j ]) : diffs.push([ i, j ]);
+        return diffs;
+    }, Array2D.contains = function(grid, value) {
+        for (var contains = !1, i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) row[j] === value && (contains = !0);
+        return contains;
+    }, Array2D.includes = function(grid1, grid2) {
+        var d1 = Array2D.dimensions(grid1), d2 = Array2D.dimensions(grid2), w1 = d1[0], h1 = d1[1], w2 = d2[0], h2 = d2[1];
+        if (w2 < 1) return !1;
+        if (h2 < 1) return !1;
+        if (w2 > w1) return !1;
+        if (h2 > h1) return !1;
+        for (var first = grid2[0][0], starters = [], i = 0; i < grid1.length; i++) for (j = 0; j < grid1[i].length; j++) (cell1 = grid1[i][j]) === first && starters.push([ i, j ]);
+        var startersLen = starters.length;
+        if (startersLen < 1) return !1;
+        for (var x = 0; x < startersLen; x++) {
+            for (var sr = starters[x][0], sc = starters[x][1], match = !0, i = 0; i < grid2.length; i++) {
+                var row1 = grid1[i + sr], row2 = grid2[i];
+                if (!isArray(row1)) break;
+                if (!isArray(row2)) break;
+                for (var j = 0; j < grid2[i].length; j++) {
+                    var cell1 = row1[j + sc];
+                    cell1 !== row2[j] && (match = !1);
+                }
+            }
+            if (!0 === match) return !0;
+        }
+        return !1;
+    }, Array2D.symmetrical = function(grid, axis) {
+        switch (axis) {
+          case Array2D.AXES.Y:
+            return Array2D.hsymmetrical(grid);
+
+          case Array2D.AXES.X:
+            return Array2D.vsymmetrical(grid);
+
+          default:
+            throw "Array2D.js: Invalid axis given for `symmetrical`";
+        }
+    }, Array2D.hsymmetrical = function(grid) {
+        for (var i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) if (row[j] !== row[l2 - 1 - j]) return !1;
+        return !0;
+    }, Array2D.vsymmetrical = function(grid) {
+        var transposed = Array2D.transpose(grid);
+        return Array2D.hsymmetrical(transposed);
+    }, Array2D.eachCell = function(grid, iterator) {
+        for (var i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) iterator(row[j], i, j, grid);
+    }, Array2D.nthCell = function(grid, n, s, iterator) {
+        for (var x = 0, i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) {
+            var cell = row[j], isAtNth = (x - s) % n == 0;
+            x >= s && isAtNth && iterator(cell, i, j, grid), x += 1;
+        }
+    }, Array2D.eachRow = function(grid, iterator) {
+        for (var i = 0, l1 = grid.length; i < l1; i++) iterator(cloneArray(grid[i]), i, grid);
+    }, Array2D.eachColumn = function(grid, iterator) {
+        for (var transposed = Array2D.transpose(grid), i = 0, l1 = transposed.length; i < l1; i++) iterator(cloneArray(transposed[i]), i, grid);
+    }, Array2D.forArea = function(grid, r, c, w, h, iterator) {
+        for (var cropped = Array2D.crop(grid, r, c, w, h), i = 0, l1 = cropped.length; i < l1; i++) for (var row = cropped[i], j = 0, l2 = row.length; j < l2; j++) iterator(row[j], i, j, grid);
+    }, Array2D.forRow = function(grid, r, iterator) {
+        for (var row = Array2D.row(grid, r), i = 0, l = row.length; i < l; i++) iterator(row[i], r, i, grid);
+    }, Array2D.forColumn = function(grid, c, iterator) {
+        for (var column = Array2D.column(grid, c), i = 0, l = column.length; i < l; i++) iterator(column[i], i, c, grid);
+    }, Array2D.flatten = function(grid) {
+        for (var flattened = [], i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) flattened.push(row[j]);
+        return flattened;
+    }, Array2D.squash = function(grid) {
+        var transposed = Array2D.transpose(grid);
+        return Array2D.flatten(transposed);
+    }, Array2D.map = function(grid, iterator) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            out[i] = [];
+            for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) {
+                var result, cell = row[j];
+                result = iterator ? iterator(cell, i, j, grid) : cell, out[i][j] = result;
+            }
+        }
+        return out;
+    }, Array2D.reduce = function(grid, iterator) {
+        for (var reduced = [], i = 0, l = grid.length; i < l; i++) reduced[i] = iterator(grid[i], i, grid);
+        return reduced;
+    }, Array2D.boildown = function(grid, iterator) {
+        var transposed = Array2D.transpose(grid);
+        return Array2D.reduce(transposed, iterator);
+    }, Array2D.row = function(grid, r) {
+        return cloneArray(grid[r]);
+    }, Array2D.column = function(grid, c) {
+        var transposed = Array2D.transpose(grid);
+        return Array2D.row(transposed, c);
+    }, Array2D.top = function(grid) {
+        return cloneArray(grid[0]);
+    }, Array2D.bottom = function(grid) {
+        return cloneArray(grid[grid.length - 1]);
+    }, Array2D.left = function(grid) {
+        Array2D.transpose(grid);
+        return Array2D.top(grid);
+    }, Array2D.right = function(grid) {
+        Array2D.transpose(grid);
+        return Array2D.bottom(grid);
+    }, Array2D.widest = function(grid) {
+        for (var widest = grid[0], i = 0, l = grid.length; i < l; i++) {
+            var row = grid[i];
+            row.length > widest.length && (widest = row);
+        }
+        return cloneArray(widest);
+    }, Array2D.thinnest = function(grid) {
+        for (var thinnest = grid[0], i = 0, l = grid.length; i < l; i++) {
+            var row = grid[i];
+            row.length < thinnest.length && (thinnest = row);
+        }
+        return cloneArray(thinnest);
+    }, Array2D.tallest = function(grid) {
+        var transposed = Array2D.transpose(grid);
+        return Array2D.widest(transposed);
+    }, Array2D.shortest = function(grid) {
+        var transposed = Array2D.transpose(grid);
+        return Array2D.thinnest(transposed);
+    }, Array2D.setRow = function(grid, r, array) {
+        for (var out = [], i = 0, l = grid.length; i < l; i++) out[i] = cloneArray(i === r ? array : grid[i]);
+        return out;
+    }, Array2D.setColumn = function(grid, c, array) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            var row = grid[i];
+            out[i] = [];
+            for (var j = 0, l2 = row.length; j < l2; j++) out[i][j] = j === c ? array[j] : row[j];
+        }
+        return out;
+    }, Array2D.fillRow = function(grid, r, value) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            var row = grid[i];
+            out[i] = [];
+            for (var j = 0, l2 = row.length; j < l2; j++) out[i][j] = i === r ? value : row[j];
+        }
+        return out;
+    }, Array2D.fillColumn = function(grid, c, value) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            var row = grid[i];
+            out[i] = [];
+            for (var j = 0, l2 = row.length; j < l2; j++) out[i][j] = j === c ? value : row[j];
+        }
+        return out;
+    }, Array2D.spliceRow = function(grid, r, array) {
+        for (var out = [], i = 0, l = grid.length; i < l; i++) i === r && out.push(array), 
+        out.push(grid[i]);
+        return out;
+    }, Array2D.spliceColumn = function(grid, c, array) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            var row = grid[i];
+            out[i] = [];
+            for (var j = 0, l2 = row.length; j < l2; j++) j === c && out[i].push(array[j]), 
+            out[i].push(row[j]);
+        }
+        return out;
+    }, Array2D.deleteRow = function(grid, r) {
+        for (var out = [], i = 0, l = grid.length; i < l; i++) i !== r && out.push(grid[i]);
+        return out;
+    }, Array2D.deleteColumn = function(grid, c) {
+        for (var out = [], i = 0, l1 = grid.length; i < l1; i++) {
+            var row = grid[i];
+            out[i] = [];
+            for (var j = 0, l2 = row.length; j < l2; j++) j !== c && out[i].push(row[j]);
+        }
+        return out;
+    }, Array2D.exists = function(grid, r, c) {
+        return !isUndefined(Array2D.get(grid, r, c));
+    }, Array2D.occupied = function(grid, r, c) {
+        return isPresent(Array2D.get(grid, r, c));
+    }, Array2D.inBounds = function(grid, r, c) {
+        return !(r < 0 || c < 0) && (!!isArray(grid[r]) && !(c > grid[r].length - 1));
+    }, Array2D.copy = function(grid, r1, c1, r2, c2) {
+        var cell = Array2D.get(grid, r1, c1);
+        return Array2D.set(grid, r2, c2, cell);
+    }, Array2D.move = function(grid, r1, c1, r2, c2) {
+        var cell = Array2D.get(grid, r1, c1), copied = Array2D.set(grid, r2, c2, cell);
+        return Array2D.set(copied, r1, c1, null);
+    }, Array2D.swap = function(grid, r1, c1, r2, c2) {
+        var cell1 = Array2D.get(grid, r1, c1), cell2 = Array2D.get(grid, r2, c2), first = Array2D.set(grid, r2, c2, cell1);
+        return Array2D.set(first, r1, c1, cell2);
+    }, Array2D.edge = function(grid, r, c) {
+        if (0 === r) return !0;
+        if (0 === c) return !0;
+        var width = Array2D.width(grid);
+        return r === Array2D.height(grid) - 1 || c === width - 1;
+    }, Array2D.edges = function(grid, r, c) {
+        var edges = [];
+        0 === r && edges.push(Array2D.EDGES.TOP), 0 === c && edges.push(Array2D.EDGES.LEFT);
+        var width = Array2D.width(grid);
+        return r === Array2D.height(grid) - 1 && edges.push(Array2D.EDGES.BOTTOM), c === width - 1 && edges.push(Array2D.EDGES.RIGHT), 
+        edges;
+    }, Array2D.corner = function(grid, r, c) {
+        if (0 === r && 0 === c) return !0;
+        var width = Array2D.width(grid), height = Array2D.height(grid);
+        return 0 === r && c === width - 1 || (r === height - 1 && c === width - 1 || r === height - 1 && 0 === c);
+    }, Array2D.corners = function(grid, r, c) {
+        var corners = [];
+        0 === r && 0 === c && corners.push(Array2D.CORNERS.TOP_LEFT);
+        var width = Array2D.width(grid), height = Array2D.height(grid);
+        return 0 === r && c === width - 1 && corners.push(Array2D.CORNERS.TOP_RIGHT), r === height - 1 && c === width - 1 && corners.push(Array2D.CORNERS.BOTTOM_RIGHT), 
+        r === height - 1 && 0 === c && corners.push(Array2D.CORNERS.BOTTOM_LEFT), corners;
+    }, Array2D.boundary = function(grid, r, c) {
+        return 0 === r || (0 === c || (c === Array2D.row(grid, r).length - 1 || r === Array2D.column(grid, c).length - 1));
+    }, Array2D.boundaries = function(grid, r, c) {
+        var boundaries = [];
+        return 0 === r && boundaries.push(Array2D.BOUNDARIES.UPPER), 0 === c && boundaries.push(Array2D.BOUNDARIES.LEFT), 
+        c === Array2D.row(grid, r).length - 1 && boundaries.push(Array2D.BOUNDARIES.RIGHT), 
+        r === Array2D.column(grid, c).length - 1 && boundaries.push(Array2D.BOUNDARIES.LOWER), 
+        boundaries;
+    }, Array2D.crook = function(grid, r, c) {
+        if (0 === r && 0 === c) return !0;
+        var right = Array2D.row(grid, r).length - 1, bottom = Array2D.column(grid, c).length - 1;
+        return 0 === r && c === bottom || (r === right && 0 === c || r === right && c === bottom);
+    }, Array2D.crooks = function(grid, r, c) {
+        var crooks = [], right = Array2D.row(grid, r).length - 1, bottom = Array2D.column(grid, c).length - 1;
+        return 0 === r && 0 === c && crooks.push(Array2D.CROOKS.UPPER_LEFT), 0 === r && c === bottom && crooks.push(Array2D.CROOKS.LOWER_LEFt), 
+        r === right && 0 === c && crooks.push(Array2D.CROOKS.UPPER_RIGHT), r === right && c === bottom && crooks.push(Array2D.CROOKS.LOWER_RIGHT), 
+        crooks;
+    }, Array2D.center = function(grid, r, c) {
+        var width = Array2D.width(grid), height = Array2D.height(grid);
+        return width % 2 != 0 && (height % 2 != 0 && (Math.floor(height / 2) === r && Math.floor(width / 2) === c));
+    }, Array2D.interior = function(grid, r, c) {
+        if (0 === r) return !1;
+        if (0 === c) return !1;
+        var width = Array2D.width(grid), height = Array2D.height(grid);
+        return !(width < 3) && (!(height < 3) && (!(r >= height - 1) && !(c >= width - 1)));
+    }, Array2D.quadrants = function(grid, r, c) {
+        var quadrants = [], width = Array2D.width(grid), height = Array2D.height(grid), midcolumn = Math.floor(width / 2), midrow = Math.floor(height / 2);
+        return r <= midrow && c > midcolumn && quadrants.push(Array2D.QUADRANTS.I), r <= midrow && c <= midcolumn && quadrants.push(Array2D.QUADRANTS.II), 
+        r > midrow && c <= midcolumn && quadrants.push(Array2D.QUADRANTS.III), r > midrow && c > midcolumn && quadrants.push(Array2D.QUADRANTS.IV), 
+        quadrants;
+    }, Array2D.orthogonals = function(grid, r, c) {
+        var orthogonals = [];
+        return orthogonals[0] = Array2D.get(grid, r - 1, c), orthogonals[1] = Array2D.get(grid, r, c - 1), 
+        orthogonals[2] = Array2D.get(grid, r, c + 1), orthogonals[3] = Array2D.get(grid, r + 1, c), 
+        orthogonals;
+    }, Array2D.diagonals = function(grid, r, c) {
+        var diagonals = [];
+        return diagonals[0] = Array2D.get(grid, r - 1, c - 1), diagonals[1] = Array2D.get(grid, r - 1, c + 1), 
+        diagonals[2] = Array2D.get(grid, r + 1, c - 1), diagonals[3] = Array2D.get(grid, r + 1, c + 1), 
+        diagonals;
+    }, Array2D.neighbors = function(grid, r, c) {
+        var orthogonals = Array2D.orthogonals(grid, r, c), diagonals = Array2D.diagonals(grid, r, c), neighbors = [];
+        return neighbors[0] = diagonals[0], neighbors[1] = orthogonals[0], neighbors[2] = diagonals[1], 
+        neighbors[3] = orthogonals[1], neighbors[4] = orthogonals[2], neighbors[5] = diagonals[2], 
+        neighbors[6] = orthogonals[3], neighbors[7] = diagonals[3], neighbors;
+    }, Array2D.neighborhood = function(grid, r, c) {
+        var cell = Array2D.get(grid, r, c), neighbors = Array2D.neighbors(grid, r, c);
+        return [ [ neighbors[0], neighbors[1], neighbors[2] ], [ neighbors[3], cell, neighbors[4] ], [ neighbors[5], neighbors[6], neighbors[7] ] ];
+    }, Array2D.euclidean = function(grid, r1, c1, r2, c2) {
+        return Math.sqrt(Math.pow(r2 - r1, 2) + Math.pow(c2 - c1, 2));
+    }, Array2D.chebyshev = function(grid, r1, c1, r2, c2) {
+        var v = Math.abs(r2 - r1), h = Math.abs(c2 - c1);
+        return v > h ? v : h;
+    }, Array2D.manhattan = function(grid, r1, c1, r2, c2) {
+        return Math.abs(r2 - r1) + Math.abs(c2 - c1);
+    }, Array2D.find = function(grid, finder) {
+        for (var found = [], i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) finder(row[j], i, j, grid) && found.push([ i, j ]);
+        return found;
+    }, Array2D.contiguous = function(grid, finder, countDiagonals) {
+        for (var contiguous = [], checked = [], dimensions = Array2D.dimensions(grid), w = dimensions[0], h = dimensions[1], i = 0; i < h; i++) for (var j = 0; j < w; j++) _findContiguous(grid[i][j], i, j, grid, w, h, contiguous, checked, finder, countDiagonals);
+        return contiguous;
+    }, Array2D.touching = function(grid, finder) {
+        return Array2D.contiguous(grid, finder, !0);
+    }, Array2D.surrounds = function(grid, r, c, allowOutOfBounds) {
+        var surrounds = [], d = Array2D.dimensions(grid), right = d[0] - 1, bottm = d[1] - 1;
+        return (r > 0 && c > 0 || allowOutOfBounds) && surrounds.push([ r - 1, c - 1 ]), 
+        (r > 0 || allowOutOfBounds) && surrounds.push([ r - 1, c ]), (r > 0 && c < right || allowOutOfBounds) && surrounds.push([ r - 1, c + 1 ]), 
+        (c > 0 || allowOutOfBounds) && surrounds.push([ r, c - 1 ]), (c < right || allowOutOfBounds) && surrounds.push([ r, c + 1 ]), 
+        (r < bottm && c > 0 || allowOutOfBounds) && surrounds.push([ r + 1, c - 1 ]), (r < bottm || allowOutOfBounds) && surrounds.push([ r + 1, c ]), 
+        (r < bottm && c < right || allowOutOfBounds) && surrounds.push([ r + 1, c + 1 ]), 
+        surrounds;
+    }, Array2D.fromArray = function(arr, rows, columns) {
+        for (var out = [], i = 0; i < rows; i++) {
+            out[i] = [];
+            for (var j = 0; j < columns; j++) out[i][j] = arr[i * columns + j];
+        }
+        return out;
+    }, Array2D.fromCanvas = function(canvas) {
+        for (var image = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.width), width = image.width, height = image.height, data = image.data, colors = [], i = 0, l = data.length; i < l; i += 4) {
+            var color = [ data[i], data[i + 1], data[i + 2], data[i + 3] ];
+            colors.push(color);
+        }
+        return Array2D.fromArray(colors, height, width);
+    }, Array2D.toCanvas = function(grid, canvas, converter) {
+        for (var colors, context = canvas.getContext("2d"), width = canvas.width, height = canvas.height, image = context.createImageData(width, height), data = image.data, i = 0, l1 = grid.length; i < l1; i++) for (var row = grid[i], j = 0, l2 = row.length; j < l2; j++) {
+            var cell = row[j];
+            colors = converter ? converter(cell, i, j, grid) : cell;
+            var idx = 4 * (i * width + j);
+            data[idx + 0] = colors[0], data[idx + 1] = colors[1], data[idx + 2] = colors[2], 
+            data[idx + 3] = colors[3];
+        }
+        context.putImageData(image, 0, 0);
+    };
+}.call(this), function(global, factory) {
     "use strict";
     "object" == typeof module && "object" == typeof module.exports ? module.exports = global.document ? factory(global, !0) : function(w) {
         if (!w.document) throw new Error("jQuery requires a window with a document");
