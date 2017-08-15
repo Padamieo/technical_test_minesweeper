@@ -2,54 +2,74 @@
 
 function game() {
     this.init = function(mobile) {
-        console.log("game init"), this.mobile = mobile, this.mobile || this.disableRightClick(), 
-        this.canvas = new PIXI.Application(800, 600, {
+        console.log("game init"), this.mobile = mobile, this.mode = "default", this.mobile || this.disableRightClick(), 
+        this.canvas = new PIXI.Application(600, 600, {
             backgroundColor: 1087931
-        }), document.body.appendChild(this.canvas.view);
+        }), PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST, document.body.appendChild(this.canvas.view);
         var localRef = this;
-        this.assetsPromise = new Promise(function(resolve, reject) {
-            var loader = new PIXI.loaders.Loader();
-            loader.add("placeholder.png", "img/spritesheet.json"), loader.on("complete", resolve), 
-            loader.load();
-        }), this.assetsPromise.then(function(result) {
+        this.loadSpriteSheet().then(function(result) {
             localRef.setupGame();
         }, function(err) {
             console.log(err);
         });
-    }, this.onAssetLoad = function() {
-        this.sprite = PIXI.Sprite.fromFrame("grass");
+    }, this.loadSpriteSheet = function() {
+        return new Promise(function(resolve, reject) {
+            var loader = new PIXI.loaders.Loader();
+            loader.add("placeholder.png", "img/spritesheet.json"), loader.on("complete", resolve), 
+            loader.load();
+        });
     }, this.disableRightClick = function() {
         document.oncontextmenu = function(event) {
-            if (console.log(event.toElement.localName), "canvas" === event.toElement.localName) return event.preventDefault(), 
-            !1;
+            if ("canvas" === event.toElement.localName) return event.preventDefault(), !1;
         };
     }, this.setupGame = function(data) {
         console.log("setupGame");
-        var data = [ [ 0, 0, 0, 1 ], [ 0, 0, 0, 0 ], [ 0, 1, 0, 0 ], [ 0, 1, 0, 1 ] ];
+        var data = [ [ 1, 0, 0, 0 ], [ 0, 0, 0, 0 ], [ 0, 0, 0, 0 ], [ 0, 0, 0, 1 ] ];
         this.field = data, this.container = new PIXI.Container();
         for (var r = 0; r < this.field.length; r++) for (var c = 0; c < this.field[r].length; c++) this.addSprite(r, c);
         this.container.pivot.x = this.container.width / 2, this.container.pivot.y = this.container.height / 2, 
         this.container.x = this.canvas.renderer.width / 2, this.container.y = this.canvas.renderer.height / 2, 
         this.canvas.stage.addChild(this.container);
     }, this.addSprite = function(r, c) {
-        var placeholder = PIXI.Texture.fromFrame("grass"), temp = new PIXI.Sprite(placeholder);
-        if (temp.x = c % 4 * 50, temp.y = r % 4 * 50, temp.interactive = !0, temp.buttonMode = !0, 
-        0 != this.field[r][c]) temp.bomb = !0; else {
+        if ("default" == this.mode) image = "grass"; else var image = 2 == this.field[r][c] ? "rock" : "grass";
+        var placeholder = PIXI.Texture.fromFrame(image), temp = new PIXI.Sprite(placeholder);
+        if (temp.x = c % 4 * 55, temp.y = r % 4 * 55, temp.interactive = !0, temp.buttonMode = !0, 
+        temp.accessible = !0, temp.accessibleTitle = "Click to reveal area", 0 != this.field[r][c]) temp.bomb = !0; else {
             temp.bomb = !1;
             var s = this.calculateNeighbourSum(r, c);
-            temp.data = s;
+            temp.neighbours = s, temp.c = c, temp.r = r;
         }
-        this.mobile || temp.on("click", this.onClick), this.container.addChild(temp);
+        var localRef = this;
+        this.mobile ? temp.on("tap", function() {
+            localRef.reveal(this);
+        }) : (temp.on("click", function() {
+            localRef.reveal(this);
+        }), temp.on("rightclick", function() {
+            localRef.flag(this);
+        })), this.container.addChild(temp);
+    }, this.cascade = function(r, c) {
+        for (var spriteGrid = this.container.children, surrounds = Array2D.surrounds(this.field, r, c), i = 0; i < surrounds.length; i++) for (var e = 0; e < spriteGrid.length; e++) if (spriteGrid[e].interactive && !spriteGrid[e].bomb && spriteGrid[e].r == surrounds[i][0] && spriteGrid[e].c == surrounds[i][1] && 0 == spriteGrid[e].neighbours) {
+            var sprite = this.container.children[e];
+            this.reveal(sprite);
+        }
     }, this.calculateNeighbourSum = function(r, c) {
-        for (var neighbors = Array2D.neighbors(this.field, r, c), sum = 0, i = 0; i < neighbors.length; i++) void 0 != neighbors[i] && (sum += neighbors[i]);
+        for (var neighbors = Array2D.neighbors(this.field, r, c), sum = 0, i = 0; i < neighbors.length; i++) void 0 != neighbors[i] && (sum += neighbors[i] <= 1 ? neighbors[i] : 1);
         return sum;
-    }, this.onClick = function() {
+    }, this.reveal = function(sprite) {
         var newTexture = PIXI.Texture.fromFrame("dirt");
-        if (this.bomb) console.log("boom trigger end of game"), newTexture = PIXI.Texture.fromFrame("bomb"); else if (0 != this.data) {
-            var n = this.data > 3 ? 3 : this.data;
-            newTexture = PIXI.Texture.fromFrame(n);
+        if (sprite.interactive = !1, sprite.bomb) console.log("boom trigger end of game"), 
+        newTexture = PIXI.Texture.fromFrame("bomb"); else {
+            this.calculateNeighbourSum(sprite.r, sprite.c);
+            if (0 != sprite.neighbours) {
+                var n = sprite.neighbours >= 8 ? 8 : sprite.neighbours;
+                newTexture = PIXI.Texture.fromFrame(n);
+            } else this.cascade(sprite.r, sprite.c);
         }
-        this.texture = newTexture;
+        sprite.texture = newTexture;
+    }, this.flag = function(sprite) {
+        console.log("place flag");
+        var newTexture = PIXI.Texture.fromFrame("flag");
+        sprite.texture = newTexture;
     };
 }
 

@@ -11,14 +11,6 @@
     "grunt-browser-sync": "*",
     "load-grunt-tasks": "*"
   },
-  "browser": {
-    "game": "src/game.js"
-  },
-  "browserify-shim": {
-    "game": {
-      "exports": "game"
-    }
-  },
   "dependencies": {
     "array2d": "0.0.5",
     "jquery": "^3.2.1",

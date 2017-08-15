@@ -4,54 +4,49 @@ function game(){
     console.log("game init");
 
     this.mobile = mobile;
+    this.mode = "default";
+    //this.state = "pending";
 
     if(!this.mobile){
       this.disableRightClick();
     }
 
-    this.canvas = new PIXI.Application(800, 600, {
-      backgroundColor : 0x1099bb
+    this.canvas = new PIXI.Application(600, 600, {
+      backgroundColor : 0x1099bb //0x15932a
     });
+
+    // Scale mode for all textures, will retain pixelation
+    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
     document.body.appendChild(this.canvas.view);
     var localRef = this;
 
-    this.assetsPromise = new Promise(function(resolve, reject) {
-      var loader = new PIXI.loaders.Loader();
-      loader.add('placeholder.png', 'img/spritesheet.json');
-      //console.log(loader);
-      loader.on("complete", resolve );
-      // function(){
-      //   console.log(localRef);
-      //   localRef.sprite = PIXI.Texture.fromFrame("grass");
-      //   console.log(this);
-      // });
-      //this.onAssetLoad );
-      loader.load();
-    });
 
-    this.assetsPromise.then(function(result) {
-      //var b = PIXI.Texture.fromFrame("grass");
-      //console.log(b); // "Stuff worked!"
-      //console.log( localRef );
+    var spriteSheetPromise = this.loadSpriteSheet();
+    spriteSheetPromise.then(function(result) {
       localRef.setupGame();
     }, function(err) {
-      console.log(err); // Error: "It broke"
+      console.log(err);
     });
 
-    //var container = new PIXI.Container();
-    //this.state = "pending";
   },
 
-  this.onAssetLoad = function( ){
-    this.sprite = PIXI.Sprite.fromFrame("grass");
+  this.loadSpriteSheet = function(){
+    var spriteSheetPromise = new Promise(function(resolve, reject) {
+      var loader = new PIXI.loaders.Loader();
+      loader.add('placeholder.png', 'img/spritesheet.json');
+      loader.on("complete", resolve );
+      loader.load();
+    });
+    return spriteSheetPromise;
   },
 
+  // disabled default right click contextmenu on canvas
   this.disableRightClick = function(){
     //document.body.oncontextmenu
     //document.oncontextmenu
     document.oncontextmenu = function(event) {
-      console.log(event.toElement.localName);
+      //console.log(event.toElement.localName);
       if(event.toElement.localName === 'canvas'){
         event.preventDefault();
         return false;
@@ -63,10 +58,10 @@ function game(){
     console.log("setupGame");
 
     var data = [
-      [ 0,0,0,1 ],
+      [ 1,0,0,0 ],
       [ 0,0,0,0 ],
-      [ 0,1,0,0 ],
-      [ 0,1,0,1 ]
+      [ 0,0,0,0 ],
+      [ 0,0,0,1 ]
     ];
     this.field = data;
 
@@ -87,33 +82,84 @@ function game(){
   },
 
   this.addSprite = function( r, c ){
-    var placeholder = PIXI.Texture.fromFrame("grass");
+    if(this.mode == "default"){
+      var image = "grass";
+    }else{
+      var image = ( this.field[r][c] == 2 ? "rock" : "grass" );
+    }
+
+    var placeholder = PIXI.Texture.fromFrame( image );
     // following will be in the loop
     var temp = new PIXI.Sprite(placeholder);
 
-    temp.x = (c % 4) * 50;
-    temp.y = (r % 4) * 50;
+    temp.x = (c % 4) * 55;
+    temp.y = (r % 4) * 55;
 
     // Opt-in to interactivity
     temp.interactive = true;
-
     // Shows hand cursor
     temp.buttonMode = true;
+
+    temp.accessible = true;
+    temp.accessibleTitle = 'Click to reveal area';
 
     if( this.field[r][c] != 0 ){
       temp.bomb = true;
     }else{
       temp.bomb = false;
       var s = this.calculateNeighbourSum( r, c );
-      temp.data = s;
+      temp.neighbours = s;
+      temp.c = c;
+      temp.r = r;
     }
 
+    var localRef = this;
     if(!this.mobile){
-      temp.on('click', this.onClick);
+
+      temp.on('click', function(){
+        localRef.reveal( this );
+      });
+
+      temp.on('rightclick', function(){
+        localRef.flag( this );
+      });
+
     }else{
+      // touch-only
+      temp.on('tap', function(){
+        localRef.reveal( this );
+      });
 
     }
+
     this.container.addChild(temp);
+  },
+
+  this.cascade = function( r, c ){
+    //console.log(this.container.children);
+    var spriteGrid = this.container.children;
+    //take x,y / r,c look for empty ones arround
+    //console.log( r +"="+ c );
+    var surrounds = Array2D.surrounds(this.field, r, c );
+    //console.log( surrounds );
+    for(var i = 0; i < surrounds.length; i++ ){
+      //console.log(spriteGrid.length);
+      for(var e = 0; e < spriteGrid.length; e++ ){
+        if(spriteGrid[e].interactive && !spriteGrid[e].bomb){
+          if( spriteGrid[e].r == surrounds[i][0] && spriteGrid[e].c == surrounds[i][1] ){
+
+            // console.log(surrounds[i]);
+            // console.log(spriteGrid[e].r+"-"+spriteGrid[e].c);
+
+            if(spriteGrid[e].neighbours == 0){
+              var sprite = this.container.children[e];
+              this.reveal( sprite );
+            }
+
+          }
+        }
+      }
+    }
   },
 
   this.calculateNeighbourSum = function( r, c ){
@@ -121,25 +167,36 @@ function game(){
     var sum = 0;
     for(var i = 0; i < neighbors.length; i++ ){
       if( neighbors[i] != undefined ){
-        sum = sum + neighbors[i];
+        sum = sum + (neighbors[i] <= 1 ? neighbors[i] : 1 );
       }
     }
     return sum;
   },
 
-  this.onClick = function() {
-      var newTexture = PIXI.Texture.fromFrame("dirt");
-      if(this.bomb){
-        console.log("boom trigger end of game");
-        newTexture = PIXI.Texture.fromFrame("bomb");
+  this.reveal = function( sprite ) {
+    var newTexture = PIXI.Texture.fromFrame( "dirt" );
+    sprite.interactive = false;
+    if(sprite.bomb){
+      console.log("boom trigger end of game");
+      newTexture = PIXI.Texture.fromFrame( "bomb" );
+    }else{
+      var cal = this.calculateNeighbourSum(sprite.r, sprite.c );
+      if( sprite.neighbours != 0 ){
+        var n = (sprite.neighbours >= 8 ? 8 : sprite.neighbours );
+        newTexture = PIXI.Texture.fromFrame(n);
       }else{
-        if( this.data != 0 ){
-          var n = (this.data > 3 ? 3 : this.data );
-          newTexture = PIXI.Texture.fromFrame(n);
-        }
+        this.cascade( sprite.r, sprite.c );
       }
-      // may want animation, then reveal
-      this.texture = newTexture;
+    }
+    // may want animation, then reveal
+    sprite.texture = newTexture;
+  },
+
+  this.flag = function( sprite ) {
+    //may need a limit on flags per bombs
+    console.log("place flag");
+    var newTexture = PIXI.Texture.fromFrame( "flag" );
+    sprite.texture = newTexture;
   }
 
 };
