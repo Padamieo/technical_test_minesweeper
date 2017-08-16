@@ -5,10 +5,11 @@
   "author": "Michaél Adam Lockwood",
   "devDependencies": {
     "grunt": "~0.4.5",
+    "grunt-browser-sync": "*",
     "grunt-contrib-copy": "*",
+    "grunt-contrib-jshint": "^1.1.0",
     "grunt-contrib-uglify": "*",
     "grunt-contrib-watch": "*",
-    "grunt-browser-sync": "*",
     "load-grunt-tasks": "*"
   },
   "dependencies": {

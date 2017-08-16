@@ -67,9 +67,14 @@ module.exports = function(grunt){
 					watchTask: true
 				}
 			}
+		},
+
+		jshint: {
+			options: {
+				expr: true
+			},
+			all: ['Gruntfile.js', 'src/**/*.js']
 		}
-
-
 
   });
 
@@ -80,5 +85,15 @@ module.exports = function(grunt){
 		'browserSync',
     'watch'
   ]);
+
+	grunt.registerTask('serve', [
+		'browserSync',
+		'watch'
+	]);
+
+	//
+	grunt.registerTask('test', [
+		'jshint'
+	]);
 
 };

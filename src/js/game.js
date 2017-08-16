@@ -1,4 +1,4 @@
-function game(){
+var game = function(){
 
   this.init = function( mobile ){
     console.log("game init");
@@ -22,17 +22,21 @@ function game(){
     var localRef = this;
 
     var spriteSheetPromise = this.loadSpriteSheet();
+
     spriteSheetPromise.then(function(result) {
       localRef.setupGame();
     }, function(err) {
       console.log(err);
     });
-
   },
 
   this.loadSpriteSheet = function(){
+    var localRef = this;
     var spriteSheetPromise = new Promise(function(resolve, reject) {
       var loader = new PIXI.loaders.Loader();
+      loader.add('levels', 'levels/levels.json', function (e) {
+        localRef.levels = e.data;
+      });
       loader.add('placeholder.png', 'img/spritesheet.json');
       loader.on("complete", resolve );
       loader.load();
@@ -50,26 +54,16 @@ function game(){
         event.preventDefault();
         return false;
       }
-    }
+    };
   },
 
   this.setupGame = function( data ){
     console.log("setupGame");
 
-    var data = [
-      [ 1,0,0,0 ],
-      [ 0,0,0,0 ],
-      [ 0,0,0,0 ],
-      [ 0,0,0,1 ]
-    ];
-    this.field = data;
+    //fallbacks here
+    this.field = this.levels[1];
     this.revealed = 0;
     this.unrevealed = 0;
-
-    //intial attempt to get amount of blank spaces for win condition
-    // var contains = Array2D.contains(this.field, 0);
-    // console.log("contains");
-    // console.log(contains);
 
     this.container = new PIXI.Container();
 
@@ -91,18 +85,17 @@ function game(){
   },
 
   this.addSprite = function( r, c ){
-    if(this.mode == "default"){
-      var image = "grass";
-    }else{
-      var image = ( this.field[r][c] == 2 ? "rock" : "grass" );
+    var image = "grass";
+    if(this.mode == "special"){
+      image = ( this.field[r][c] == 2 ? "rock" : "grass" );
     }
 
     var placeholder = PIXI.Texture.fromFrame( image );
     // following will be in the loop
     var temp = new PIXI.Sprite(placeholder);
 
-    temp.x = (c % 4) * 55;
-    temp.y = (r % 4) * 55;
+    temp.x = c * 55;
+    temp.y = r * 55;
 
     // Opt-in to interactivity
     temp.interactive = true;
@@ -174,9 +167,9 @@ function game(){
       }
     }
 
-    for(var i = 0; i < batchOne.length; i++ ){
-      var e = batchOne[i];
-      var sprite = this.container.children[e];
+    for(var b = 0; b < batchOne.length; b++ ){
+      var s = batchOne[b];
+      var sprite = this.container.children[s];
       this.reveal( sprite );
     }
     /*
@@ -204,32 +197,45 @@ function game(){
   },
 
   this.reveal = function( sprite ) {
-    var newTexture = PIXI.Texture.fromFrame( "dirt" );
-    sprite.interactive = false;
-    if(sprite.bomb){
-      console.log("boom trigger end of game");
-      newTexture = PIXI.Texture.fromFrame( "bomb" );
-    }else{
-      var cal = this.calculateNeighbourSum(sprite.r, sprite.c );
-      if( sprite.neighbours != 0 ){
-        var n = (sprite.neighbours >= 8 ? 8 : sprite.neighbours );
-        newTexture = PIXI.Texture.fromFrame(n);
+    if(sprite.interactive){
+      var newTexture = PIXI.Texture.fromFrame( "dirt" );
+      sprite.interactive = false;
+      if(sprite.bomb){
+        console.log("boom trigger end of game");
+        newTexture = PIXI.Texture.fromFrame( "bomb" );
       }else{
-        this.cascade( sprite.r, sprite.c );
+        var cal = this.calculateNeighbourSum(sprite.r, sprite.c );
+        if( sprite.neighbours != 0 ){
+          var n = (sprite.neighbours >= 8 ? 8 : sprite.neighbours );
+          newTexture = PIXI.Texture.fromFrame(n);
+        }else{
+          this.cascade( sprite.r, sprite.c );
+        }
+        this.revealed++;
+        console.log(this.revealed);
       }
-      this.revealed++;
-      console.log(this.revealed);
+      // may want animation, then reveal
+      sprite.texture = newTexture;
+      this.winCondition();
     }
-    // may want animation, then reveal
-    sprite.texture = newTexture;
-
   },
 
   this.flag = function( sprite ) {
     //may need a limit on flags per bombs
+    //need to take flag away too
     console.log("place flag");
     var newTexture = PIXI.Texture.fromFrame( "flag" );
     sprite.texture = newTexture;
-  }
+  },
+
+  this.cleanUp = function(){
+
+  },
+
+  this.winCondition = function() {
+    if(this.revealed >= this.unrevealed){
+      console.log( "Winner" );
+    }
+  };
 
 };

@@ -17,6 +17,10 @@
     </div>
   </body>
   <script src="app.js"></script>
-  <script>document.write('<script src="//' + window.location.hostname + ':1337/livereload.js"><\/script>');</script>
+  <script>
+    if(window.location.host == "localhost:3000"){
+      document.write('<script src="//' + window.location.hostname + ':1337/livereload.js"><\/script>');
+    }
+  </script>
 
 </html>

@@ -7,7 +7,7 @@ app.init = function ( mobile ) {
   // setup ui menu
 
   // same time setup basics
-  this.game = new game;
+  this.game = new game();
   this.game.init( mobile );
   this.intialized = true;
 
