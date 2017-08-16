@@ -10,3 +10,10 @@ To develop you will need to have the following on your system.
 * Node : [http://nodejs.org](http://nodejs.org)
 * Grunt : [http://gruntjs.com](http://gruntjs.com)
 * [Google Chrome](http://www.google.com/chrome/) or similiar modern browser.
+
+#### Todo:
+* win condition
+* end game - action
+  * explosion animation
+  * clean up container ready for (state reset)
+* animated flag

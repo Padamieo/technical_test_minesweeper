@@ -21,7 +21,6 @@ function game(){
     document.body.appendChild(this.canvas.view);
     var localRef = this;
 
-
     var spriteSheetPromise = this.loadSpriteSheet();
     spriteSheetPromise.then(function(result) {
       localRef.setupGame();
@@ -64,12 +63,22 @@ function game(){
       [ 0,0,0,1 ]
     ];
     this.field = data;
+    this.revealed = 0;
+    this.unrevealed = 0;
+
+    //intial attempt to get amount of blank spaces for win condition
+    // var contains = Array2D.contains(this.field, 0);
+    // console.log("contains");
+    // console.log(contains);
 
     this.container = new PIXI.Container();
 
     for(var r = 0; r < this.field.length; r++ ){
       for(var c = 0; c < this.field[r].length; c++ ){
         this.addSprite( r, c );
+        if( this.field[r][c] == 0 ){
+          this.unrevealed = this.unrevealed + 1;
+        }
       }
     }
 
@@ -100,9 +109,6 @@ function game(){
     // Shows hand cursor
     temp.buttonMode = true;
 
-    temp.accessible = true;
-    temp.accessibleTitle = 'Click to reveal area';
-
     if( this.field[r][c] != 0 ){
       temp.bomb = true;
     }else{
@@ -132,11 +138,15 @@ function game(){
 
     }
 
+    temp.accessible = true;
+    temp.accessibleTitle = 'Click to reveal area';
+
     this.container.addChild(temp);
   },
 
   this.cascade = function( r, c ){
-    //console.log(this.container.children);
+    var batchOne = [];
+    var batchTwo = [];
     var spriteGrid = this.container.children;
     //take x,y / r,c look for empty ones arround
     //console.log( r +"="+ c );
@@ -152,14 +162,34 @@ function game(){
             // console.log(spriteGrid[e].r+"-"+spriteGrid[e].c);
 
             if(spriteGrid[e].neighbours == 0){
-              var sprite = this.container.children[e];
-              this.reveal( sprite );
+              // var sprite = this.container.children[e];
+              // this.reveal( sprite );
+              batchOne.push(e);
+            }else{
+              batchTwo.push(e);
             }
 
           }
         }
       }
     }
+
+    for(var i = 0; i < batchOne.length; i++ ){
+      var e = batchOne[i];
+      var sprite = this.container.children[e];
+      this.reveal( sprite );
+    }
+    /*
+    var localRef = this;
+    setTimeout(function() {
+      for(var i = 0; i < batchTwo.length; i++ ){
+        var e = batchTwo[i];
+        var sprite = localRef.container.children[e];
+        localRef.reveal( sprite );
+      }
+    }, 150);
+    */
+
   },
 
   this.calculateNeighbourSum = function( r, c ){
@@ -187,9 +217,12 @@ function game(){
       }else{
         this.cascade( sprite.r, sprite.c );
       }
+      this.revealed++;
+      console.log(this.revealed);
     }
     // may want animation, then reveal
     sprite.texture = newTexture;
+
   },
 
   this.flag = function( sprite ) {
