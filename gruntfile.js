@@ -30,7 +30,7 @@ module.exports = function(grunt){
       build:{
         files:[{
           cwd: 'src/',
-          src: ['**', '!**/js/*.js'],
+          src: ['**', '!**/js/*.js', '!**/*.less'],
           dest: 'build/',
           nonull: false,
           expand: true,
@@ -39,6 +39,20 @@ module.exports = function(grunt){
         },]
       }
     },
+
+		less: {
+			live: {
+				options: {
+					strictMath: true,
+					sourceMap: false,
+					outputSourceFiles: true,
+					sourceMapURL: 'style.css.map',
+					sourceMapFilename: 'www/css/style.css.map'
+				},
+				src: 'src/less/style.less',
+				dest: 'build/css/style.css'
+			}
+		},
 
     watch:{
       options: {
@@ -49,8 +63,12 @@ module.exports = function(grunt){
         files: ['src/js/**.js'],
         tasks: ['uglify:app']
       },
+			less:{
+				files: 'src/less/*.less',
+				tasks: ['less']
+			},
       html:{
-        files: ['src/**.html', 'src/**/**.json', 'src/**/**.css'],
+        files: ['src/**.html', 'src/**/**.json'],
         tasks: ['copy:build']
       }
     },
@@ -89,6 +107,7 @@ module.exports = function(grunt){
   // our default task, others will come later
   grunt.registerTask('default', [
 		'copy:build',
+		'less',
 		'uglify',
 		'browserSync',
     'watch'

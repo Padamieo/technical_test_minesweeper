@@ -7,6 +7,8 @@ var game = function(){
     this.mode = "default";
     //this.state = "pending";
     this.gridSize = 9;
+    this.flagHoldDuration = 500;
+    this.currentlevel = 1;
 
     if(!this.mobile){
       this.disableRightClick();
@@ -14,29 +16,34 @@ var game = function(){
       this.vibration = app.vibrationSupport();
     }
 
-    this.canvas = new PIXI.Application(600, 600, {
-      backgroundColor : 0x1099bb //0x15932a
+    this.canvas = new PIXI.Application(600, 800, {
+      backgroundColor : 0x15932a
     });
 
     // Scale mode for all textures, will retain pixelation
     PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
     document.body.appendChild(this.canvas.view);
+    $(this.canvas.view).attr('id', 'canvas');
     var localRef = this;
 
     var spriteSheetPromise = this.loadSpriteSheet();
 
     spriteSheetPromise.then(function(result) {
-      localRef.setupGame( 1 );
+      //localRef.setupGame( this.currentlevel );
     }, function(err) {
       console.log(err);
     });
 
-    //this.canvas.renderer.scale.x = this.canvas.renderer.scale.y = 0.5;
-
     this.setupStats();
 
-     //this.canvas.renderer.resize(window.innerWidth, window.innerHeight);
+    // TODO: could not figure out a perfect scaling solution, used css in end
+    //this.canvas.width  = window.innerWidth;
+    //this.canvas.view.height = window.innerHeight;
+
+    //this.canvas.stage.scale.set(1.2);
+    //this.canvas.renderer.resize(window.innerWidth, window.innerHeight);
+
   },
 
   this.setupStats = function(){
@@ -49,8 +56,10 @@ var game = function(){
   },
 
   this.vibrate = function( value ){
-    if(this.vibration){
-      navigator.vibrate( value );
+    if(this.mobile){
+      if(this.vibration){
+        navigator.vibrate( value );
+      }
     }
   },
 
@@ -82,15 +91,14 @@ var game = function(){
   },
 
   this.generateField = function(){
+    // TODO: finish generating playing field
     var initiated = Array2D.build( this.gridSize, this.gridSize );
-    var base = Array2D.fill( initiated, 0 );
-    console.log(base);
+    var bare = Array2D.fill( initiated, 0 );
+    console.log(bare);
   },
 
   this.setupGame = function( level ){
-    console.log("setupGame");
 
-    //no level set fallback to random generated
     if( level == undefined ){
       data = this.generateField();
     }else{
@@ -115,16 +123,31 @@ var game = function(){
       }
     }
 
-    this.container.pivot.x = this.container.width / 2;
-    this.container.pivot.y = this.container.height / 2;
-    this.container.x = this.canvas.renderer.width / 2;
-    this.container.y = this.canvas.renderer.height / 2;
+    this.container.x = (this.canvas.renderer.width / 2) - (this.container.width / 2)+22.5;
+    this.container.y = (this.canvas.renderer.height / 2) - (this.container.height / 2);
+    this.canvas.stage.interactive = true;
 
     this.canvas.stage.addChild(this.container);
-    this.canvas.start();
 
-    // for ui on press, may not be used
-    //this.ui = new PIXI.Container();
+    if(this.mobile){
+      this.setupIndicator();
+    }
+
+    this.canvas.start();
+  },
+
+  this.setupIndicator = function(){
+    this.indicator = new PIXI.Graphics();
+    this.indicator.beginFill(0xFFFFFF, 0);
+    this.indicator.lineStyle(2, 0xFFFFFF, 1);
+    this.indicatorData = {
+      size: 150,
+      endTime: 0,
+      startTime: 0
+    };
+    this.indicator.drawCircle ( (this.canvas.renderer.width / 2), (this.canvas.renderer.height / 2), this.indicatorData.size );
+    this.canvas.stage.addChild( this.indicator );
+    this.indicator.alpha = 0;
   },
 
   this.addSprite = function( r, c ){
@@ -134,12 +157,13 @@ var game = function(){
     }
     var placeholder = [];
     var frame = PIXI.Texture.fromFrame( image );
-
     placeholder.push( frame );
     var temp = new PIXI.extras.AnimatedSprite( placeholder, true );
 
     temp.x = c * 55;
     temp.y = r * 55;
+
+    temp.anchor.set(0.5);
 
     // Opt-in to interactivity
     temp.interactive = true;
@@ -171,38 +195,82 @@ var game = function(){
 
     }else{
       // touch-only
-      temp.on('touchstart', function(){
-        localRef.touchDifferentiator( this, 'start' );
+      temp.on('touchstart', function(e){
+        localRef.touchDifferentiator( this, 'start', e );
       });
-      temp.on('touchend', function(){
-        localRef.touchDifferentiator( this, 'end' );
+      temp.on('touchend', function(e){
+        localRef.touchDifferentiator( this, 'end', e );
       });
+      // temp.on('touchcancel', function(e){
+      //   localRef.touchDifferentiator( this, 'cancel', e );
+      // });
+      temp.on('touchendoutside', function(e){
+        localRef.touchDifferentiator( this, 'end', e );
+      });
+      // temp.on('touchmove', function(e){
+      //   localRef.touchDifferentiator( this, 'move', e );
+      // });
     }
 
     temp.accessible = true;
     temp.accessibleTitle = 'Click to reveal area';
 
     this.container.addChild(temp);
+
   },
 
-  this.touchDifferentiator = function( sprite, input ) {
+  this.touchDifferentiator = function( sprite, input, e ) {
+    // TODO: following commented out code is for tracking touch position
+    // var touchPosition = e.data.getLocalPosition(this.canvas.stage);
+    // var x = touchPosition.x;
+    // var y = touchPosition.y;
+    var x = sprite.x;
+    var y = sprite.y;
+
     if( input == "start" ){
-      this.canvas.stage.interactive = true;
-      var graphics = new PIXI.Graphics();
-      graphics.beginFill(0xFFFFFF, 0);
-      graphics.lineStyle(2, 0xFFFFFF, 1);
-      //var mousePosition = this.canvas.renderer.interaction.mouse.global;
-      //console.log(mousePosition);
-      console.log( this.canvas.renderer );
-      graphics.drawCircle( 100, 100, 100 );
-      this.canvas.stage.addChild(graphics);
-      //localRef.reveal( sprite );
+
+      var time = new Date().getTime();
+      this.indicatorData.endTime = time + this.flagHoldDuration;
+
+      var localRef = this;
+      this.timer = new PIXI.ticker.Ticker();
+      this.timer.add(function() {
+        // TODO: would be nice to have indictor stop when flag is able to be placed more precisely and or change color
+        var time = new Date().getTime();
+        if( localRef.indicatorData.endTime >= time ){
+          localRef.indicator.clear();
+          localRef.indicator.beginFill(0xFFFFFF, 0);
+          localRef.indicator.lineStyle(2, 0xFFFFFF, 1);
+          var size = localRef.indicatorData.size / 1.1;
+          localRef.indicatorData.size = ( size < 45 ? 45 : size );
+          localRef.indicator.drawCircle(localRef.container.x, localRef.container.y, localRef.indicatorData.size );
+          localRef.indicator.worldTransform.tx = x;
+          localRef.indicator.worldTransform.ty = y;
+          localRef.indicator.alpha = 1;
+        }else{
+          localRef.vibrate( 10 );
+          this.destroy();
+        }
+      });
+      this.timer.start();
+
+    }
+
+    if( input == "move" ){
+      // TODO: may want the indicator to follow users finger
     }
 
     if( input == "end" ){
-      //remove indicator
+      var time = new Date().getTime();
+      if( time >= this.indicatorData.endTime ){
+        this.flag( sprite );
+      }else{
+        this.reveal( sprite );
+      }
+      this.indicator.alpha = 0;
+      this.indicatorData.size = 100;
+      this.timer.destroy();
     }
-    console.log( input );
 
   },
 
@@ -262,7 +330,8 @@ var game = function(){
           console.log("boom trigger end of game");
           newTexture = PIXI.Texture.fromFrame( "bomb" );
           this.vibrate( 500 );
-          //this.cleanUp();
+          this.showResult();
+          //this.cleanUp(); // noted issue
         }else{
           var cal = this.calculateNeighbourSum(sprite.r, sprite.c );
           if( sprite.neighbours != 0 ){
@@ -308,8 +377,15 @@ var game = function(){
     }
   },
 
+  this.showResult = function (){
+    //TODO : show outcome to userAgent
+    setTimeout(function() {
+      app.menuReset();
+    }, 1000);
+  },
+
   this.cleanUp = function(){
-    // this does not work
+    // TODO : find way to clean up ready for a new game
     // this.canvas.stage.removeChild(this.container);
   },
 

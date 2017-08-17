@@ -1,4 +1,4 @@
-/*minesweeper V0.0.1 made on 2017-08-17*/
+/*minesweeper_technical_test V0.0.1 made on 2017-08-18*/
 
 !function(f, e) {
     "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : f.Stats = e();
@@ -16394,21 +16394,19 @@
 var game = function() {
     this.init = function(mobile) {
         console.log("game init"), this.mobile = mobile, this.mode = "default", this.gridSize = 9, 
-        this.mobile ? this.vibration = app.vibrationSupport() : this.disableRightClick(), 
-        this.canvas = new PIXI.Application(600, 600, {
-            backgroundColor: 1087931
-        }), PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST, document.body.appendChild(this.canvas.view);
-        var localRef = this;
-        this.loadSpriteSheet().then(function(result) {
-            localRef.setupGame(1);
-        }, function(err) {
+        this.flagHoldDuration = 500, this.currentlevel = 1, this.mobile ? this.vibration = app.vibrationSupport() : this.disableRightClick(), 
+        this.canvas = new PIXI.Application(600, 800, {
+            backgroundColor: 1413930
+        }), PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST, document.body.appendChild(this.canvas.view), 
+        $(this.canvas.view).attr("id", "canvas");
+        this.loadSpriteSheet().then(function(result) {}, function(err) {
             console.log(err);
         }), this.setupStats();
     }, this.setupStats = function() {
         "localhost:3000" == window.location.host && (stats = new Stats(), stats.domElement.style.position = "absolute", 
         stats.domElement.style.top = "0px", document.body.appendChild(stats.domElement));
     }, this.vibrate = function(value) {
-        this.vibration && navigator.vibrate(value);
+        this.mobile && this.vibration && navigator.vibrate(value);
     }, this.loadSpriteSheet = function() {
         var localRef = this;
         return new Promise(function(resolve, reject) {
@@ -16423,46 +16421,68 @@ var game = function() {
             if ("canvas" === event.toElement.localName) return event.preventDefault(), !1;
         };
     }, this.generateField = function() {
-        var initiated = Array2D.build(this.gridSize, this.gridSize), base = Array2D.fill(initiated, 0);
-        console.log(base);
+        var initiated = Array2D.build(this.gridSize, this.gridSize), bare = Array2D.fill(initiated, 0);
+        console.log(bare);
     }, this.setupGame = function(level) {
-        console.log("setupGame"), void 0 == level ? data = this.generateField() : void 0 != this.levels[level] ? data = this.levels[level] : data = this.generateField(), 
+        void 0 == level ? data = this.generateField() : void 0 != this.levels[level] ? data = this.levels[level] : data = this.generateField(), 
         this.field = data, this.revealed = 0, this.unrevealed = 0, this.container = new PIXI.Container();
         for (var r = 0; r < this.field.length; r++) for (var c = 0; c < this.field[r].length; c++) this.addSprite(r, c), 
         0 == this.field[r][c] && (this.unrevealed = this.unrevealed + 1);
-        this.container.pivot.x = this.container.width / 2, this.container.pivot.y = this.container.height / 2, 
-        this.container.x = this.canvas.renderer.width / 2, this.container.y = this.canvas.renderer.height / 2, 
-        this.canvas.stage.addChild(this.container), this.canvas.start();
+        this.container.x = this.canvas.renderer.width / 2 - this.container.width / 2 + 22.5, 
+        this.container.y = this.canvas.renderer.height / 2 - this.container.height / 2, 
+        this.canvas.stage.interactive = !0, this.canvas.stage.addChild(this.container), 
+        this.mobile && this.setupIndicator(), this.canvas.start();
+    }, this.setupIndicator = function() {
+        this.indicator = new PIXI.Graphics(), this.indicator.beginFill(16777215, 0), this.indicator.lineStyle(2, 16777215, 1), 
+        this.indicatorData = {
+            size: 150,
+            endTime: 0,
+            startTime: 0
+        }, this.indicator.drawCircle(this.canvas.renderer.width / 2, this.canvas.renderer.height / 2, this.indicatorData.size), 
+        this.canvas.stage.addChild(this.indicator), this.indicator.alpha = 0;
     }, this.addSprite = function(r, c) {
         var image = "grass";
         "special" == this.mode && (image = 2 == this.field[r][c] ? "rock" : "grass");
         var placeholder = [], frame = PIXI.Texture.fromFrame(image);
         placeholder.push(frame);
         var temp = new PIXI.extras.AnimatedSprite(placeholder, !0);
-        if (temp.x = 55 * c, temp.y = 55 * r, temp.interactive = !0, temp.buttonMode = !0, 
-        temp.animationSpeed = 0, 0 != this.field[r][c]) temp.bomb = !0; else {
+        if (temp.x = 55 * c, temp.y = 55 * r, temp.anchor.set(.5), temp.interactive = !0, 
+        temp.buttonMode = !0, temp.animationSpeed = 0, 0 != this.field[r][c]) temp.bomb = !0; else {
             temp.bomb = !1;
             var s = this.calculateNeighbourSum(r, c);
             temp.neighbours = s, temp.c = c, temp.r = r;
         }
         var localRef = this;
-        this.mobile ? (temp.on("touchstart", function() {
-            localRef.touchDifferentiator(this, "start");
-        }), temp.on("touchend", function() {
-            localRef.touchDifferentiator(this, "end");
+        this.mobile ? (temp.on("touchstart", function(e) {
+            localRef.touchDifferentiator(this, "start", e);
+        }), temp.on("touchend", function(e) {
+            localRef.touchDifferentiator(this, "end", e);
+        }), temp.on("touchendoutside", function(e) {
+            localRef.touchDifferentiator(this, "end", e);
         })) : (temp.on("click", function() {
             localRef.reveal(this);
         }), temp.on("rightclick", function() {
             localRef.flag(this);
         })), temp.accessible = !0, temp.accessibleTitle = "Click to reveal area", this.container.addChild(temp);
-    }, this.touchDifferentiator = function(sprite, input) {
+    }, this.touchDifferentiator = function(sprite, input, e) {
+        var x = sprite.x, y = sprite.y;
         if ("start" == input) {
-            this.canvas.stage.interactive = !0;
-            var graphics = new PIXI.Graphics();
-            graphics.beginFill(16777215, 0), graphics.lineStyle(2, 16777215, 1), console.log(this.canvas.renderer), 
-            graphics.drawCircle(100, 100, 100), this.canvas.stage.addChild(graphics);
+            var time = new Date().getTime();
+            this.indicatorData.endTime = time + this.flagHoldDuration;
+            var localRef = this;
+            this.timer = new PIXI.ticker.Ticker(), this.timer.add(function() {
+                var time = new Date().getTime();
+                if (localRef.indicatorData.endTime >= time) {
+                    localRef.indicator.clear(), localRef.indicator.beginFill(16777215, 0), localRef.indicator.lineStyle(2, 16777215, 1);
+                    var size = localRef.indicatorData.size / 1.1;
+                    localRef.indicatorData.size = size < 45 ? 45 : size, localRef.indicator.drawCircle(localRef.container.x, localRef.container.y, localRef.indicatorData.size), 
+                    localRef.indicator.worldTransform.tx = x, localRef.indicator.worldTransform.ty = y, 
+                    localRef.indicator.alpha = 1;
+                } else localRef.vibrate(10), this.destroy();
+            }), this.timer.start();
         }
-        console.log(input);
+        "end" == input && ((time = new Date().getTime()) >= this.indicatorData.endTime ? this.flag(sprite) : this.reveal(sprite), 
+        this.indicator.alpha = 0, this.indicatorData.size = 100, this.timer.destroy());
     }, this.cascade = function(r, c) {
         for (var batchOne = [], batchTwo = [], spriteGrid = this.container.children, surrounds = Array2D.surrounds(this.field, r, c), i = 0; i < surrounds.length; i++) for (var e = 0; e < spriteGrid.length; e++) spriteGrid[e].interactive && !spriteGrid[e].bomb && spriteGrid[e].r == surrounds[i][0] && spriteGrid[e].c == surrounds[i][1] && (0 == spriteGrid[e].neighbours ? batchOne.push(e) : batchTwo.push(e));
         this.cascadeSet(batchOne);
@@ -16482,7 +16502,7 @@ var game = function() {
         if (sprite.interactive && (void 0 == sprite.flaged || 0 == sprite.flaged)) {
             var newTexture = PIXI.Texture.fromFrame("dirt");
             if (sprite.interactive = !1, sprite.bomb) console.log("boom trigger end of game"), 
-            newTexture = PIXI.Texture.fromFrame("bomb"), this.vibrate(500); else {
+            newTexture = PIXI.Texture.fromFrame("bomb"), this.vibrate(500), this.showResult(); else {
                 this.calculateNeighbourSum(sprite.r, sprite.c);
                 if (0 != sprite.neighbours) {
                     var n = sprite.neighbours >= 8 ? 8 : sprite.neighbours;
@@ -16503,6 +16523,10 @@ var game = function() {
         void 0 == sprite.flaged || 0 == sprite.flaged ? (sprite.flaged = !0, sprite.textures = this.animatedFlag(), 
         sprite.animationSpeed = .05, sprite.gotoAndPlay(0), sprite.texture.update()) : (sprite.flaged = !1, 
         sprite.texture = PIXI.Texture.fromFrame("grass"), sprite.animationSpeed = 0);
+    }, this.showResult = function() {
+        setTimeout(function() {
+            app.menuReset();
+        }, 1e3);
     }, this.cleanUp = function() {}, this.winCondition = function() {
         this.revealed >= this.unrevealed && console.log("Winner");
     };
@@ -16511,10 +16535,21 @@ var game = function() {
 };
 
 app.init = function(mobile) {
-    this.game = new game(), this.game.init(mobile), this.intialized = !0;
+    this.game = new game(), this.game.init(mobile), this.intialized = !0, app.prepActions();
 }, app.vibrationSupport = function() {
     return navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate, 
     !!navigator.vibrate;
+}, app.prepActions = function() {
+    var localRef = this;
+    $(document).on("click", ".button", function() {
+        "start" === this.id && ($("#canvas").show(), $("#menu").slideUp("slow", function() {
+            localRef.game.setupGame(1);
+        }));
+    });
+}, app.menuReset = function() {
+    $("#menu").slideDown("slow", function() {
+        $("#canvas").hide();
+    });
 }, $(document).ready(function() {
     var mobile = /Mobi/.test(navigator.userAgent);
     app.init(mobile);
