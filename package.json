@@ -10,7 +10,8 @@
     "grunt-contrib-jshint": "^1.1.0",
     "grunt-contrib-uglify": "*",
     "grunt-contrib-watch": "*",
-    "load-grunt-tasks": "*"
+    "load-grunt-tasks": "*",
+    "stats.js": "*"
   },
   "dependencies": {
     "array2d": "0.0.5",

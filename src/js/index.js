@@ -11,14 +11,13 @@ app.init = function ( mobile ) {
   this.game.init( mobile );
   this.intialized = true;
 
-  var example = [
-    [ 0,0,0,1 ],
-    [ 0,0,0,0 ],
-    [ 0,1,0,0 ],
-    [ 0,0,0,1 ]
-  ];
   //this.game.setupGame( example );
 
+};
+
+app.vibrationSupport = function (){
+  navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
+  return (navigator.vibrate ? true : false );
 };
 
 // this is our application starting point

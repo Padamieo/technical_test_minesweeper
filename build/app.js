@@ -1,6 +1,65 @@
-/*minesweeper V0.0.1 made on 2017-08-16*/
+/*minesweeper V0.0.1 made on 2017-08-17*/
 
-!function(f) {
+!function(f, e) {
+    "object" == typeof exports && "undefined" != typeof module ? module.exports = e() : "function" == typeof define && define.amd ? define(e) : f.Stats = e();
+}(this, function() {
+    var f = function() {
+        function e(a) {
+            return c.appendChild(a.dom), a;
+        }
+        function u(a) {
+            for (var d = 0; d < c.children.length; d++) c.children[d].style.display = d === a ? "block" : "none";
+            l = a;
+        }
+        var l = 0, c = document.createElement("div");
+        c.style.cssText = "position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000", 
+        c.addEventListener("click", function(a) {
+            a.preventDefault(), u(++l % c.children.length);
+        }, !1);
+        var k = (performance || Date).now(), g = k, a = 0, r = e(new f.Panel("FPS", "#0ff", "#002")), h = e(new f.Panel("MS", "#0f0", "#020"));
+        if (self.performance && self.performance.memory) var t = e(new f.Panel("MB", "#f08", "#201"));
+        return u(0), {
+            REVISION: 16,
+            dom: c,
+            addPanel: e,
+            showPanel: u,
+            begin: function() {
+                k = (performance || Date).now();
+            },
+            end: function() {
+                a++;
+                var c = (performance || Date).now();
+                if (h.update(c - k, 200), c > g + 1e3 && (r.update(1e3 * a / (c - g), 100), g = c, 
+                a = 0, t)) {
+                    var d = performance.memory;
+                    t.update(d.usedJSHeapSize / 1048576, d.jsHeapSizeLimit / 1048576);
+                }
+                return c;
+            },
+            update: function() {
+                k = this.end();
+            },
+            domElement: c,
+            setMode: u
+        };
+    };
+    return f.Panel = function(e, f, l) {
+        var c = 1 / 0, k = 0, g = Math.round, a = g(window.devicePixelRatio || 1), r = 80 * a, h = 48 * a, t = 3 * a, v = 2 * a, d = 3 * a, m = 15 * a, n = 74 * a, p = 30 * a, q = document.createElement("canvas");
+        q.width = r, q.height = h, q.style.cssText = "width:80px;height:48px";
+        var b = q.getContext("2d");
+        return b.font = "bold " + 9 * a + "px Helvetica,Arial,sans-serif", b.textBaseline = "top", 
+        b.fillStyle = l, b.fillRect(0, 0, r, h), b.fillStyle = f, b.fillText(e, t, v), b.fillRect(d, m, n, p), 
+        b.fillStyle = l, b.globalAlpha = .9, b.fillRect(d, m, n, p), {
+            dom: q,
+            update: function(h, w) {
+                c = Math.min(c, h), k = Math.max(k, h), b.fillStyle = l, b.globalAlpha = 1, b.fillRect(0, 0, r, m), 
+                b.fillStyle = f, b.fillText(g(h) + " " + e + " (" + g(c) + "-" + g(k) + ")", t, v), 
+                b.drawImage(q, d + a, m, n - a, p, d, m, n - a, p), b.fillRect(d + n - a, m, a, p), 
+                b.fillStyle = l, b.globalAlpha = .9, b.fillRect(d + n - a, m, a, g((1 - h / w) * p));
+            }
+        };
+    }, f;
+}), function(f) {
     if ("object" == typeof exports && "undefined" != typeof module) module.exports = f(); else if ("function" == typeof define && define.amd) define([], f); else {
         ("undefined" != typeof window ? window : "undefined" != typeof global ? global : "undefined" != typeof self ? self : this).PIXI = f();
     }
@@ -16334,7 +16393,7 @@
 
 var game = function() {
     this.init = function(mobile) {
-        console.log("game init"), this.mobile = mobile, this.mode = "default", this.mobile || this.disableRightClick(), 
+        console.log("game init"), this.mobile = mobile, this.mode = "default", this.mobile ? this.vibration = app.vibrationSupport() : this.disableRightClick(), 
         this.canvas = new PIXI.Application(600, 600, {
             backgroundColor: 1087931
         }), PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST, document.body.appendChild(this.canvas.view);
@@ -16343,7 +16402,12 @@ var game = function() {
             localRef.setupGame();
         }, function(err) {
             console.log(err);
-        });
+        }), this.setupStats();
+    }, this.setupStats = function() {
+        "localhost:3000" == window.location.host && (stats = new Stats(), stats.domElement.style.position = "absolute", 
+        stats.domElement.style.top = "0px", document.body.appendChild(stats.domElement));
+    }, this.vibrate = function(value) {
+        this.vibration && navigator.vibrate(value);
     }, this.loadSpriteSheet = function() {
         var localRef = this;
         return new Promise(function(resolve, reject) {
@@ -16364,7 +16428,7 @@ var game = function() {
         0 == this.field[r][c] && (this.unrevealed = this.unrevealed + 1);
         this.container.pivot.x = this.container.width / 2, this.container.pivot.y = this.container.height / 2, 
         this.container.x = this.canvas.renderer.width / 2, this.container.y = this.canvas.renderer.height / 2, 
-        this.canvas.stage.addChild(this.container);
+        this.canvas.stage.addChild(this.container), this.canvas.start();
     }, this.addSprite = function(r, c) {
         var image = "grass";
         "special" == this.mode && (image = 2 == this.field[r][c] ? "rock" : "grass");
@@ -16376,17 +16440,27 @@ var game = function() {
             temp.neighbours = s, temp.c = c, temp.r = r;
         }
         var localRef = this;
-        this.mobile ? temp.on("tap", function() {
-            localRef.reveal(this);
-        }) : (temp.on("click", function() {
+        this.mobile ? (temp.on("touchstart", function() {
+            localRef.touchDifferentiator(this, "start");
+        }), temp.on("touchend", function() {
+            localRef.touchDifferentiator(this, "end");
+        })) : (temp.on("click", function() {
             localRef.reveal(this);
         }), temp.on("rightclick", function() {
             localRef.flag(this);
         })), temp.accessible = !0, temp.accessibleTitle = "Click to reveal area", this.container.addChild(temp);
+    }, this.touchDifferentiator = function(sprite, input) {
+        console.log(input);
     }, this.cascade = function(r, c) {
         for (var batchOne = [], batchTwo = [], spriteGrid = this.container.children, surrounds = Array2D.surrounds(this.field, r, c), i = 0; i < surrounds.length; i++) for (var e = 0; e < spriteGrid.length; e++) spriteGrid[e].interactive && !spriteGrid[e].bomb && spriteGrid[e].r == surrounds[i][0] && spriteGrid[e].c == surrounds[i][1] && (0 == spriteGrid[e].neighbours ? batchOne.push(e) : batchTwo.push(e));
-        for (var b = 0; b < batchOne.length; b++) {
-            var s = batchOne[b], sprite = this.container.children[s];
+        this.cascadeSet(batchOne);
+        var localRef = this;
+        setTimeout(function() {
+            localRef.cascadeSet(batchTwo);
+        }, 150);
+    }, this.cascadeSet = function(array) {
+        for (var b = 0; b < array.length; b++) {
+            var s = array[b], sprite = this.container.children[s];
             this.reveal(sprite);
         }
     }, this.calculateNeighbourSum = function(r, c) {
@@ -16396,20 +16470,35 @@ var game = function() {
         if (sprite.interactive) {
             var newTexture = PIXI.Texture.fromFrame("dirt");
             if (sprite.interactive = !1, sprite.bomb) console.log("boom trigger end of game"), 
-            newTexture = PIXI.Texture.fromFrame("bomb"); else {
+            newTexture = PIXI.Texture.fromFrame("bomb"), this.vibrate(500), this.cleanUp(); else {
                 this.calculateNeighbourSum(sprite.r, sprite.c);
                 if (0 != sprite.neighbours) {
                     var n = sprite.neighbours >= 8 ? 8 : sprite.neighbours;
                     newTexture = PIXI.Texture.fromFrame(n);
                 } else this.cascade(sprite.r, sprite.c);
-                this.revealed++, console.log(this.revealed);
+                this.revealed++;
             }
             sprite.texture = newTexture, this.winCondition();
         }
+    }, this.animatedFlag = function(x, y) {
+        for (var animatedFrame = [], i = 0; i < 2; i++) {
+            var frame = PIXI.Texture.fromFrame("flag" + i);
+            animatedFrame.push(frame);
+        }
+        var animatedFlag = new PIXI.extras.AnimatedSprite(animatedFrame);
+        return animatedFlag.x = this.canvas.renderer.width / 2, animatedFlag.y = this.canvas.renderer.height / 2, 
+        animatedFlag.anchor.set(.5), animatedFlag.gotoAndPlay(0), animatedFlag.animationSpeed = .05, 
+        animatedFlag;
     }, this.flag = function(sprite) {
-        console.log("place flag");
-        var newTexture = PIXI.Texture.fromFrame("flag");
-        sprite.texture = newTexture;
+        var image = "grass";
+        void 0 == sprite.flaged || 0 == sprite.flaged ? (sprite.flaged = !0, image = "flag0") : sprite.flaged = !1, 
+        sprite.texture = PIXI.Texture.fromFrame(image);
+    }, this.flag_A = function(sprite) {
+        if (void 0 == sprite.flaged || 0 == sprite.flaged) {
+            sprite.flaged = !0, console.log(sprite);
+            var x = sprite.position.x, y = sprite.position.y, anim = this.animatedFlag(x, y);
+            sprite.addChild(anim);
+        } else sprite.flaged = !1, sprite.texture = PIXI.Texture.fromFrame("grass");
     }, this.cleanUp = function() {}, this.winCondition = function() {
         this.revealed >= this.unrevealed && console.log("Winner");
     };
@@ -16419,6 +16508,9 @@ var game = function() {
 
 app.init = function(mobile) {
     this.game = new game(), this.game.init(mobile), this.intialized = !0;
+}, app.vibrationSupport = function() {
+    return navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate, 
+    !!navigator.vibrate;
 }, $(document).ready(function() {
     var mobile = /Mobi/.test(navigator.userAgent);
     app.init(mobile);

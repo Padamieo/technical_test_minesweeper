@@ -71,15 +71,30 @@
       "sourceSize": {"w": 180, "h": 180}
     },
 
-    "flag": {
-      "frame": {"x":0, "y":90, "w":45, "h":45},
+    "flag0": {
+      "frame": {"x":0, "y":135, "w":45, "h":45},
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {"x":0, "y":0, "w":180, "h":180},
       "sourceSize": {"w": 180, "h": 180}
     },
+    "flag1": {
+      "frame": {"x":45, "y":135, "w":45, "h":45},
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {"x":0, "y":0, "w":180, "h":180},
+      "sourceSize": {"w": 180, "h": 180}
+    },
+    "flag2": {
+      "frame": {"x":90, "y":135, "w":45, "h":45},
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {"x":0, "y":0, "w":180, "h":180},
+      "sourceSize": {"w": 180, "h": 180}
+    },
+
     "rock": {
-      "frame": {"x":0, "y":135, "w":45, "h":45},
+      "frame": {"x":0, "y":90, "w":45, "h":45},
       "rotated": false,
       "trimmed": false,
       "spriteSourceSize": {"x":0, "y":0, "w":180, "h":180},

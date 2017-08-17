@@ -15,6 +15,7 @@ module.exports = function(grunt){
       app:{
         files:{
           'build/app.js': [
+						'node_modules/stats.js/build/stats.min.js',
             'node_modules/pixi.js/dist/pixi.js',
 						'node_modules/array2d/Array2D.js',
 						'node_modules/jquery/dist/jquery.js',
