@@ -70,6 +70,13 @@ module.exports = function(grunt){
 			}
 		},
 
+		mochaTest: {
+		  test: {
+				require: 'jQuery',
+		    src: ['tests/**/*.js']
+		  }
+		},
+
 		jshint: {
 			options: {
 				expr: true
@@ -94,7 +101,8 @@ module.exports = function(grunt){
 
 	//
 	grunt.registerTask('test', [
-		'jshint'
+		'jshint',
+		'mochaTest'
 	]);
 
 };

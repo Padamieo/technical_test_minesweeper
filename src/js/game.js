@@ -6,13 +6,13 @@ var game = function(){
     this.mobile = mobile;
     this.mode = "default";
     //this.state = "pending";
+    this.gridSize = 9;
 
     if(!this.mobile){
       this.disableRightClick();
     }else{
       this.vibration = app.vibrationSupport();
     }
-
 
     this.canvas = new PIXI.Application(600, 600, {
       backgroundColor : 0x1099bb //0x15932a
@@ -27,10 +27,12 @@ var game = function(){
     var spriteSheetPromise = this.loadSpriteSheet();
 
     spriteSheetPromise.then(function(result) {
-      localRef.setupGame();
+      localRef.setupGame( 1 );
     }, function(err) {
       console.log(err);
     });
+
+    //this.canvas.renderer.scale.x = this.canvas.renderer.scale.y = 0.5;
 
     this.setupStats();
 
@@ -39,9 +41,9 @@ var game = function(){
 
   this.setupStats = function(){
     if(window.location.host == "localhost:3000"){
-        stats = new Stats()
-        stats.domElement.style.position = 'absolute'
-        stats.domElement.style.top = '0px'
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.top = '0px';
         document.body.appendChild(stats.domElement);
     }
   },
@@ -79,13 +81,26 @@ var game = function(){
     };
   },
 
-  this.setupGame = function( data ){
-    console.log("setupGame");
-    //console.log(Stats);
-    //stats.begin()
+  this.generateField = function(){
+    var initiated = Array2D.build( this.gridSize, this.gridSize );
+    var base = Array2D.fill( initiated, 0 );
+    console.log(base);
+  },
 
-    //fallbacks here
-    this.field = this.levels[1];
+  this.setupGame = function( level ){
+    console.log("setupGame");
+
+    //no level set fallback to random generated
+    if( level == undefined ){
+      data = this.generateField();
+    }else{
+      if( this.levels[level] != undefined ){
+        data = this.levels[level];
+      }else{
+        data = this.generateField();
+      }
+    }
+    this.field = data;
     this.revealed = 0;
     this.unrevealed = 0;
 
@@ -106,8 +121,10 @@ var game = function(){
     this.container.y = this.canvas.renderer.height / 2;
 
     this.canvas.stage.addChild(this.container);
-
     this.canvas.start();
+
+    // for ui on press, may not be used
+    //this.ui = new PIXI.Container();
   },
 
   this.addSprite = function( r, c ){
@@ -115,10 +132,11 @@ var game = function(){
     if(this.mode == "special"){
       image = ( this.field[r][c] == 2 ? "rock" : "grass" );
     }
+    var placeholder = [];
+    var frame = PIXI.Texture.fromFrame( image );
 
-    var placeholder = PIXI.Texture.fromFrame( image );
-    // following will be in the loop
-    var temp = new PIXI.Sprite(placeholder);
+    placeholder.push( frame );
+    var temp = new PIXI.extras.AnimatedSprite( placeholder, true );
 
     temp.x = c * 55;
     temp.y = r * 55;
@@ -127,6 +145,8 @@ var game = function(){
     temp.interactive = true;
     // Shows hand cursor
     temp.buttonMode = true;
+
+    temp.animationSpeed = 0;
 
     if( this.field[r][c] != 0 ){
       temp.bomb = true;
@@ -166,8 +186,24 @@ var game = function(){
   },
 
   this.touchDifferentiator = function( sprite, input ) {
+    if( input == "start" ){
+      this.canvas.stage.interactive = true;
+      var graphics = new PIXI.Graphics();
+      graphics.beginFill(0xFFFFFF, 0);
+      graphics.lineStyle(2, 0xFFFFFF, 1);
+      //var mousePosition = this.canvas.renderer.interaction.mouse.global;
+      //console.log(mousePosition);
+      console.log( this.canvas.renderer );
+      graphics.drawCircle( 100, 100, 100 );
+      this.canvas.stage.addChild(graphics);
+      //localRef.reveal( sprite );
+    }
+
+    if( input == "end" ){
+      //remove indicator
+    }
     console.log( input );
-    //localRef.reveal( this );
+
   },
 
   this.cascade = function( r, c ){
@@ -219,78 +255,62 @@ var game = function(){
 
   this.reveal = function( sprite ){
     if(sprite.interactive){
-      var newTexture = PIXI.Texture.fromFrame( "dirt" );
-      sprite.interactive = false;
-      if(sprite.bomb){
-        console.log("boom trigger end of game");
-        newTexture = PIXI.Texture.fromFrame( "bomb" );
-        this.vibrate( 500 );
-        this.cleanUp();
-      }else{
-        var cal = this.calculateNeighbourSum(sprite.r, sprite.c );
-        if( sprite.neighbours != 0 ){
-          var n = (sprite.neighbours >= 8 ? 8 : sprite.neighbours );
-          newTexture = PIXI.Texture.fromFrame(n);
+      if(sprite.flaged == undefined || sprite.flaged == false ){
+        var newTexture = PIXI.Texture.fromFrame( "dirt" );
+        sprite.interactive = false;
+        if(sprite.bomb){
+          console.log("boom trigger end of game");
+          newTexture = PIXI.Texture.fromFrame( "bomb" );
+          this.vibrate( 500 );
+          //this.cleanUp();
         }else{
-          this.cascade( sprite.r, sprite.c );
+          var cal = this.calculateNeighbourSum(sprite.r, sprite.c );
+          if( sprite.neighbours != 0 ){
+            var n = (sprite.neighbours >= 8 ? 8 : sprite.neighbours );
+            newTexture = PIXI.Texture.fromFrame(n);
+          }else{
+            this.cascade( sprite.r, sprite.c );
+          }
+          this.revealed++;
         }
-        this.revealed++;
+        // may want animation, then reveal
+        sprite.texture = newTexture;
+        sprite.animationSpeed = 0;
+        sprite.texture.update();
+
+        this.winCondition();
       }
-      // may want animation, then reveal
-      sprite.texture = newTexture;
-      this.winCondition();
     }
   },
 
-  this.animatedFlag = function( x ,y ){
+  this.animatedFlag = function( ){
     var animatedFrame = [];
-
-      for (var i = 0; i < 2; i++) {
-           var frame = PIXI.Texture.fromFrame('flag' + i );
-           animatedFrame.push(frame);
-      }
-      var animatedFlag = new PIXI.extras.AnimatedSprite(animatedFrame);
-
-      animatedFlag.x = this.canvas.renderer.width / 2;
-      animatedFlag.y = this.canvas.renderer.height / 2;
-      animatedFlag.anchor.set(0.5);
-      animatedFlag.gotoAndPlay(0);
-      animatedFlag.animationSpeed = 0.05;
-
-      return animatedFlag;
-  },
-
-  this.flag = function( sprite ) {
-    var image = "grass";
-    if(sprite.flaged == undefined || sprite.flaged == false ){
-      sprite.flaged = true;
-      image = "flag0";
-    }else{
-      sprite.flaged = false;
+    for (var i = 0; i < 3; i++) {
+         var frame = PIXI.Texture.fromFrame('flag' + i );
+         animatedFrame.push(frame);
     }
-    sprite.texture = PIXI.Texture.fromFrame( image );
+    return animatedFrame;
   },
 
-  this.flag_A = function( sprite ){
+  this.flag = function( sprite ){
     if(sprite.flaged == undefined || sprite.flaged == false ){
       sprite.flaged = true;
-      console.log(sprite);
 
-      var x = sprite.position.x;
-      var y = sprite.position.y;
-      var anim = this.animatedFlag( x, y );
-      sprite.addChild( anim );
-
+      sprite.textures = this.animatedFlag();
+      sprite.animationSpeed = 0.05;
+      sprite.gotoAndPlay(0);
+      sprite.texture.update();
     }else{
       //need to action revert somehow
       sprite.flaged = false;
       sprite.texture = PIXI.Texture.fromFrame( "grass" );
+      sprite.animationSpeed = 0;
     }
   },
 
   this.cleanUp = function(){
     // this does not work
-    //this.canvas.stage.removeChild(this.container);
+    // this.canvas.stage.removeChild(this.container);
   },
 
   this.winCondition = function(){
@@ -300,3 +320,4 @@ var game = function(){
   };
 
 };
+//modules.exports = game;

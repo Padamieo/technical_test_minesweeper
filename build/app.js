@@ -16393,13 +16393,14 @@
 
 var game = function() {
     this.init = function(mobile) {
-        console.log("game init"), this.mobile = mobile, this.mode = "default", this.mobile ? this.vibration = app.vibrationSupport() : this.disableRightClick(), 
+        console.log("game init"), this.mobile = mobile, this.mode = "default", this.gridSize = 9, 
+        this.mobile ? this.vibration = app.vibrationSupport() : this.disableRightClick(), 
         this.canvas = new PIXI.Application(600, 600, {
             backgroundColor: 1087931
         }), PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST, document.body.appendChild(this.canvas.view);
         var localRef = this;
         this.loadSpriteSheet().then(function(result) {
-            localRef.setupGame();
+            localRef.setupGame(1);
         }, function(err) {
             console.log(err);
         }), this.setupStats();
@@ -16421,9 +16422,12 @@ var game = function() {
         document.oncontextmenu = function(event) {
             if ("canvas" === event.toElement.localName) return event.preventDefault(), !1;
         };
-    }, this.setupGame = function(data) {
-        console.log("setupGame"), this.field = this.levels[1], this.revealed = 0, this.unrevealed = 0, 
-        this.container = new PIXI.Container();
+    }, this.generateField = function() {
+        var initiated = Array2D.build(this.gridSize, this.gridSize), base = Array2D.fill(initiated, 0);
+        console.log(base);
+    }, this.setupGame = function(level) {
+        console.log("setupGame"), void 0 == level ? data = this.generateField() : void 0 != this.levels[level] ? data = this.levels[level] : data = this.generateField(), 
+        this.field = data, this.revealed = 0, this.unrevealed = 0, this.container = new PIXI.Container();
         for (var r = 0; r < this.field.length; r++) for (var c = 0; c < this.field[r].length; c++) this.addSprite(r, c), 
         0 == this.field[r][c] && (this.unrevealed = this.unrevealed + 1);
         this.container.pivot.x = this.container.width / 2, this.container.pivot.y = this.container.height / 2, 
@@ -16432,9 +16436,11 @@ var game = function() {
     }, this.addSprite = function(r, c) {
         var image = "grass";
         "special" == this.mode && (image = 2 == this.field[r][c] ? "rock" : "grass");
-        var placeholder = PIXI.Texture.fromFrame(image), temp = new PIXI.Sprite(placeholder);
+        var placeholder = [], frame = PIXI.Texture.fromFrame(image);
+        placeholder.push(frame);
+        var temp = new PIXI.extras.AnimatedSprite(placeholder, !0);
         if (temp.x = 55 * c, temp.y = 55 * r, temp.interactive = !0, temp.buttonMode = !0, 
-        0 != this.field[r][c]) temp.bomb = !0; else {
+        temp.animationSpeed = 0, 0 != this.field[r][c]) temp.bomb = !0; else {
             temp.bomb = !1;
             var s = this.calculateNeighbourSum(r, c);
             temp.neighbours = s, temp.c = c, temp.r = r;
@@ -16450,6 +16456,12 @@ var game = function() {
             localRef.flag(this);
         })), temp.accessible = !0, temp.accessibleTitle = "Click to reveal area", this.container.addChild(temp);
     }, this.touchDifferentiator = function(sprite, input) {
+        if ("start" == input) {
+            this.canvas.stage.interactive = !0;
+            var graphics = new PIXI.Graphics();
+            graphics.beginFill(16777215, 0), graphics.lineStyle(2, 16777215, 1), console.log(this.canvas.renderer), 
+            graphics.drawCircle(100, 100, 100), this.canvas.stage.addChild(graphics);
+        }
         console.log(input);
     }, this.cascade = function(r, c) {
         for (var batchOne = [], batchTwo = [], spriteGrid = this.container.children, surrounds = Array2D.surrounds(this.field, r, c), i = 0; i < surrounds.length; i++) for (var e = 0; e < spriteGrid.length; e++) spriteGrid[e].interactive && !spriteGrid[e].bomb && spriteGrid[e].r == surrounds[i][0] && spriteGrid[e].c == surrounds[i][1] && (0 == spriteGrid[e].neighbours ? batchOne.push(e) : batchTwo.push(e));
@@ -16467,10 +16479,10 @@ var game = function() {
         for (var neighbors = Array2D.neighbors(this.field, r, c), sum = 0, i = 0; i < neighbors.length; i++) void 0 != neighbors[i] && (sum += neighbors[i] <= 1 ? neighbors[i] : 1);
         return sum;
     }, this.reveal = function(sprite) {
-        if (sprite.interactive) {
+        if (sprite.interactive && (void 0 == sprite.flaged || 0 == sprite.flaged)) {
             var newTexture = PIXI.Texture.fromFrame("dirt");
             if (sprite.interactive = !1, sprite.bomb) console.log("boom trigger end of game"), 
-            newTexture = PIXI.Texture.fromFrame("bomb"), this.vibrate(500), this.cleanUp(); else {
+            newTexture = PIXI.Texture.fromFrame("bomb"), this.vibrate(500); else {
                 this.calculateNeighbourSum(sprite.r, sprite.c);
                 if (0 != sprite.neighbours) {
                     var n = sprite.neighbours >= 8 ? 8 : sprite.neighbours;
@@ -16478,27 +16490,19 @@ var game = function() {
                 } else this.cascade(sprite.r, sprite.c);
                 this.revealed++;
             }
-            sprite.texture = newTexture, this.winCondition();
+            sprite.texture = newTexture, sprite.animationSpeed = 0, sprite.texture.update(), 
+            this.winCondition();
         }
-    }, this.animatedFlag = function(x, y) {
-        for (var animatedFrame = [], i = 0; i < 2; i++) {
+    }, this.animatedFlag = function() {
+        for (var animatedFrame = [], i = 0; i < 3; i++) {
             var frame = PIXI.Texture.fromFrame("flag" + i);
             animatedFrame.push(frame);
         }
-        var animatedFlag = new PIXI.extras.AnimatedSprite(animatedFrame);
-        return animatedFlag.x = this.canvas.renderer.width / 2, animatedFlag.y = this.canvas.renderer.height / 2, 
-        animatedFlag.anchor.set(.5), animatedFlag.gotoAndPlay(0), animatedFlag.animationSpeed = .05, 
-        animatedFlag;
+        return animatedFrame;
     }, this.flag = function(sprite) {
-        var image = "grass";
-        void 0 == sprite.flaged || 0 == sprite.flaged ? (sprite.flaged = !0, image = "flag0") : sprite.flaged = !1, 
-        sprite.texture = PIXI.Texture.fromFrame(image);
-    }, this.flag_A = function(sprite) {
-        if (void 0 == sprite.flaged || 0 == sprite.flaged) {
-            sprite.flaged = !0, console.log(sprite);
-            var x = sprite.position.x, y = sprite.position.y, anim = this.animatedFlag(x, y);
-            sprite.addChild(anim);
-        } else sprite.flaged = !1, sprite.texture = PIXI.Texture.fromFrame("grass");
+        void 0 == sprite.flaged || 0 == sprite.flaged ? (sprite.flaged = !0, sprite.textures = this.animatedFlag(), 
+        sprite.animationSpeed = .05, sprite.gotoAndPlay(0), sprite.texture.update()) : (sprite.flaged = !1, 
+        sprite.texture = PIXI.Texture.fromFrame("grass"), sprite.animationSpeed = 0);
     }, this.cleanUp = function() {}, this.winCondition = function() {
         this.revealed >= this.unrevealed && console.log("Winner");
     };

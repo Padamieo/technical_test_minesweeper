@@ -1,7 +1,7 @@
 {
-  "name": "minesweeper",
+  "name": "minesweeper_technical_test",
   "version": "0.0.1",
-  "description": "something about a test",
+  "description": "Minesweeper built in Pixi.js",
   "author": "Michaél Adam Lockwood",
   "devDependencies": {
     "grunt": "~0.4.5",
@@ -10,7 +10,9 @@
     "grunt-contrib-jshint": "^1.1.0",
     "grunt-contrib-uglify": "*",
     "grunt-contrib-watch": "*",
+    "grunt-mocha-test": "^0.13.2",
     "load-grunt-tasks": "*",
+    "mocha": "^3.5.0",
     "stats.js": "*"
   },
   "dependencies": {

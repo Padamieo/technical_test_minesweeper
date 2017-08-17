@@ -25,3 +25,5 @@ $( document ).ready(function() {
   var mobile = /Mobi/.test(navigator.userAgent);
   app.init( mobile );
 });
+
+//modules.exports = app;
