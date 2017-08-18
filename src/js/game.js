@@ -261,8 +261,8 @@ var game = function(){
     }
 
     if( input == "end" ){
-      var time = new Date().getTime();
-      if( time >= this.indicatorData.endTime ){
+      var timeNow = new Date().getTime();
+      if( timeNow >= this.indicatorData.endTime ){
         this.flag( sprite );
       }else{
         this.reveal( sprite );
