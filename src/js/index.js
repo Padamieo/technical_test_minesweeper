@@ -22,12 +22,20 @@ app.vibrationSupport = function (){
 app.prepActions = function(){
   var localRef = this;
   $( document ).on( "click", ".button", function() {
-    if(this.id === 'start'){
+    //TODO: probably use handlebars or something for generating, this is placeholder simple method
+    if(this.id === 'start1'){
       $( "#canvas" ).show();
       $( "#menu" ).slideUp( "slow", function() {
         localRef.game.setupGame(1);
       });
     }
+    if(this.id === 'start2'){
+      $( "#canvas" ).show();
+      $( "#menu" ).slideUp( "slow", function() {
+        localRef.game.setupGame(2);
+      });
+    }
+
   });
 };
 

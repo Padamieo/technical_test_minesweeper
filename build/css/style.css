@@ -5,12 +5,12 @@ body {
   font-size: 25px;
   font-family: 'Pacifico', Arial, sans-serif;
   line-height: 1;
+  overflow: hidden;
 }
 canvas {
   position: relative;
   display: block;
   margin: auto;
-  width: 100vw;
 }
 #menu {
   height: 100vh;
@@ -32,6 +32,23 @@ canvas {
 }
 #canvas {
   display: none;
+}
+#message {
+  display: block;
+  position: absolute;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  text-align: center;
+  z-index: 100;
+  top: -12vh;
+}
+#message span {
+  font-size: 75px;
+  color: #fff;
+  padding-top: 50vh;
+  display: block;
+  position: relative;
 }
 .button {
   display: inline-block;

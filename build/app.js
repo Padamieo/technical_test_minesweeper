@@ -16528,7 +16528,10 @@ var game = function() {
             app.menuReset();
         }, 1e3);
     }, this.cleanUp = function() {}, this.winCondition = function() {
-        this.revealed >= this.unrevealed && console.log("Winner");
+        this.revealed >= this.unrevealed && (console.log("Winner"), $("#message").show(), 
+        setTimeout(function() {
+            $("#message").hide(), app.menuReset();
+        }, 1e3));
     };
 }, app = {
     intialized: !1
@@ -16542,8 +16545,10 @@ app.init = function(mobile) {
 }, app.prepActions = function() {
     var localRef = this;
     $(document).on("click", ".button", function() {
-        "start" === this.id && ($("#canvas").show(), $("#menu").slideUp("slow", function() {
+        "start1" === this.id && ($("#canvas").show(), $("#menu").slideUp("slow", function() {
             localRef.game.setupGame(1);
+        })), "start2" === this.id && ($("#canvas").show(), $("#menu").slideUp("slow", function() {
+            localRef.game.setupGame(2);
         }));
     });
 }, app.menuReset = function() {

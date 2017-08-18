@@ -391,7 +391,13 @@ var game = function(){
 
   this.winCondition = function(){
     if(this.revealed >= this.unrevealed){
+      // TODO: this need serious polish
       console.log( "Winner" );
+      $( "#message" ).show();
+      setTimeout(function() {
+        $( "#message" ).hide();
+        app.menuReset();
+      }, 1000);
     }
   };
 
