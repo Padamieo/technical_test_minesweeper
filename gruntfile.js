@@ -90,7 +90,7 @@ module.exports = function(grunt){
 
 		mochaTest: {
 		  test: {
-				require: 'jQuery',
+				require: 'mocha-jsdom',
 		    src: ['tests/**/*.js']
 		  }
 		},

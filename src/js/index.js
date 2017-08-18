@@ -51,4 +51,4 @@ $( document ).ready(function() {
   app.init( mobile );
 });
 
-//modules.exports = app;
+module.exports = app;

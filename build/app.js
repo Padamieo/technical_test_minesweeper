@@ -16481,7 +16481,7 @@ var game = function() {
                 } else localRef.vibrate(10), this.destroy();
             }), this.timer.start();
         }
-        "end" == input && ((time = new Date().getTime()) >= this.indicatorData.endTime ? this.flag(sprite) : this.reveal(sprite), 
+        "end" == input && (new Date().getTime() >= this.indicatorData.endTime ? this.flag(sprite) : this.reveal(sprite), 
         this.indicator.alpha = 0, this.indicatorData.size = 100, this.timer.destroy());
     }, this.cascade = function(r, c) {
         for (var batchOne = [], batchTwo = [], spriteGrid = this.container.children, surrounds = Array2D.surrounds(this.field, r, c), i = 0; i < surrounds.length; i++) for (var e = 0; e < spriteGrid.length; e++) spriteGrid[e].interactive && !spriteGrid[e].bomb && spriteGrid[e].r == surrounds[i][0] && spriteGrid[e].c == surrounds[i][1] && (0 == spriteGrid[e].neighbours ? batchOne.push(e) : batchTwo.push(e));
@@ -16558,5 +16558,5 @@ app.init = function(mobile) {
 }, $(document).ready(function() {
     var mobile = /Mobi/.test(navigator.userAgent);
     app.init(mobile);
-});
+}), module.exports = app;
 //# sourceMappingURL=app.js.map

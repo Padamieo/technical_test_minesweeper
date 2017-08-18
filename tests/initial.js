@@ -1,14 +1,37 @@
 var assert = require('assert');
-//var $ = require('jQuery');
-//console.log($);
+var expect = require('expect.js');
+this.jsdom = require('jsdom-global')();
+global.$ = global.jQuery = require('jquery');
 var index = require('../src/js/index.js');
 
-describe('Array', function() {
-  describe('#indexOf()', function() {
+describe('a test area', function() {
+//
+//   var $ = 'aa';
+//   jsdom()
+//
+  // before(function () {
+  //   console.log($);
+  //   $ = require('jquery')
+  //   console.log($);
+  // });
+
+  describe(' a test ', function() {
+
+    // before(function () {
+    //   global.$ = global.jQuery = require('jquery');
+    // });
+
     it('should return -1 when the value is not present', function() {
-      var value = index.vibrationSupport();
-      console.log("value");
-      assert.equal(-1, [1,2,3].indexOf(4));
+      document.body.innerHTML = '<div>hola</div>';
+      expect($("div").html()).eql('hola');
     });
+
+    it('vvv', function() {
+      var b = index.vibrationSupport();
+      console.log(b);
+    });
+
+
   });
+
 });
