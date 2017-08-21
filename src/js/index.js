@@ -1,17 +1,20 @@
+global.$ = global.jQuery = require('jquery');
+var game = require('game');
 
 var app = {
-  intialized: false
+  intialized: false,
+  autoboot: true
 };
 
 app.init = function ( mobile ) {
   // setup ui menu
-
-  // same time setup basics
-  this.game = new game();
-  this.game.init( mobile ); // TODO: make this a promise so we know when we are ready
-  this.intialized = true;
-  app.prepActions();
-
+  if(this.autoboot){
+    // same time setup basics
+    this.game = new game();
+    this.game.init( mobile ); // TODO: make this a promise so we know when we are ready
+    this.intialized = true;
+    app.prepActions();
+  }
 };
 
 app.vibrationSupport = function (){

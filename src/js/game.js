@@ -1,6 +1,11 @@
+pixi = require("pixi.js");
+stats = require("stats.js");
+Array2D = require("array2d");
+
 var game = function(){
 
   this.init = function( mobile ){
+    //PIXI = require("pxixi.js");
     console.log("game init");
 
     this.mobile = mobile;
@@ -48,10 +53,10 @@ var game = function(){
 
   this.setupStats = function(){
     if(window.location.host == "localhost:3000"){
-        stats = new Stats();
-        stats.domElement.style.position = 'absolute';
-        stats.domElement.style.top = '0px';
-        document.body.appendChild(stats.domElement);
+        this.stats = new stats();
+        this.stats.domElement.style.position = 'absolute';
+        this.stats.domElement.style.top = '0px';
+        document.body.appendChild(this.stats.domElement);
     }
   },
 
@@ -402,4 +407,5 @@ var game = function(){
   };
 
 };
-//modules.exports = game;
+
+module.exports = game;
