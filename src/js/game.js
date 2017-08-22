@@ -1,19 +1,24 @@
-pixi = require("pixi.js");
+//pixi = require("pixi.js");
 stats = require("stats.js");
 Array2D = require("array2d");
 
 var game = function(){
 
+  this.gridSize = 9;
+  this.flagHoldDuration = 500;
+  this.mode = "default";
+  this.currentlevel = 1;
+  this.vibration = false;
+  this.mobile = false;
+  this.revealed = 0;
+  this.unrevealed = 0;
+
   this.init = function( mobile ){
-    //PIXI = require("pxixi.js");
-    console.log("game init");
+
+    PIXI = require("pixi.js");
 
     this.mobile = mobile;
-    this.mode = "default";
     //this.state = "pending";
-    this.gridSize = 9;
-    this.flagHoldDuration = 500;
-    this.currentlevel = 1;
 
     if(!this.mobile){
       this.disableRightClick();
@@ -30,6 +35,7 @@ var game = function(){
 
     document.body.appendChild(this.canvas.view);
     $(this.canvas.view).attr('id', 'canvas');
+
     var localRef = this;
 
     var spriteSheetPromise = this.loadSpriteSheet();
@@ -37,7 +43,7 @@ var game = function(){
     spriteSheetPromise.then(function(result) {
       //localRef.setupGame( this.currentlevel );
     }, function(err) {
-      console.log(err);
+      //console.log(err);
     });
 
     this.setupStats();
@@ -99,7 +105,8 @@ var game = function(){
     // TODO: finish generating playing field
     var initiated = Array2D.build( this.gridSize, this.gridSize );
     var bare = Array2D.fill( initiated, 0 );
-    console.log(bare);
+    //console.log(bare);
+    return bare;
   },
 
   this.setupGame = function( level ){
@@ -222,6 +229,7 @@ var game = function(){
 
     this.container.addChild(temp);
 
+    return 'boop';
   },
 
   this.touchDifferentiator = function( sprite, input, e ) {

@@ -1,15 +1,20 @@
 global.$ = global.jQuery = require('jquery');
-var game = require('game');
 
 var app = {
   intialized: false,
   autoboot: true
 };
 
+// console.log(app);
+// global.app = app;
+
 app.init = function ( mobile ) {
   // setup ui menu
+  console.log(this.autoboot);
   if(this.autoboot){
-    // same time setup basics
+
+    global.game = require('game');
+
     this.game = new game();
     this.game.init( mobile ); // TODO: make this a promise so we know when we are ready
     this.intialized = true;

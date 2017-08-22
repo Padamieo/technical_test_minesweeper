@@ -109,9 +109,13 @@ module.exports = function(grunt){
 		mochaTest: {
 		  test: {
 				require: 'mocha-jsdom',
-		    src: ['tests/game.js']
+		    src: ['tests/*']
 		  }
 		},
+
+		mocha_istanbul: {
+		 	src: 'tests',
+    },
 
 		jshint: {
 			options: {
@@ -139,7 +143,8 @@ module.exports = function(grunt){
 	//
 	grunt.registerTask('test', [
 		'jshint',
-		'mochaTest'
+		'mochaTest',
+		'mocha_istanbul'
 	]);
 
 };
