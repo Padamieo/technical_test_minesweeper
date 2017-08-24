@@ -12,6 +12,7 @@ var game = function(){
   this.mobile = false;
   this.revealed = 0;
   this.unrevealed = 0;
+  this.bombRatio = 12;
 
   this.init = function( mobile ){
 
@@ -102,11 +103,36 @@ var game = function(){
   },
 
   this.generateField = function(){
-    // TODO: finish generating playing field
     var initiated = Array2D.build( this.gridSize, this.gridSize );
     var bare = Array2D.fill( initiated, 0 );
-    //console.log(bare);
+    var numberOfBombs = this.calculateBombs();
+    for (i = 0; i < numberOfBombs; i++) {
+      bare = this.insertRandom( bare, 1 );
+    }
     return bare;
+  },
+
+  this.insertRandom = function( array, value ){
+      var a = this.randomBetween( 0, this.gridSize-1 );
+      var b = this.randomBetween( 0, this.gridSize-1 );
+      if(array[a][b] == 0){
+        array = Array2D.set( array, a, b, value );
+      }else{
+        array = this.insertRandom( array, value );
+      }
+      return array;
+  },
+
+  this.randomBetween = function( min, max ){
+    return Math.floor( Math.random()*( max - min + 1 ) + min );
+  },
+
+  this.calculateBombs = function(){
+    var spaced = this.gridSize*this.gridSize;
+    var bombRatio = ( this.bombRatio > 33 ? 33 : this.bombRatio );
+    var bombsToPlace = (spaced/100)*bombRatio;
+    var number = Math.ceil(bombsToPlace);
+    return number;
   },
 
   this.setupGame = function( level ){
