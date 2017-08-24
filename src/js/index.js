@@ -9,16 +9,16 @@ var app = {
 // global.app = app;
 
 app.init = function () {
-  var mobile = /Mobi/.test(navigator.userAgent);
+  this.mobile = /Mobi/.test(navigator.userAgent);
 
   if(this.autoboot){
     global.game = require('game');
     this.game = new game();
-    this.game.init( mobile ); // TODO: make this a promise so we know when we are ready
+    this.game.init( this.mobile ); // TODO: make this a promise so we know when we are ready
     this.intialized = true;
     app.prepActions();
   }
-  
+
 };
 
 app.vibrationSupport = function (){

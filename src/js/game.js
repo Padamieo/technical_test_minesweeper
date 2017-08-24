@@ -342,10 +342,12 @@ var game = function(){
   },
 
   this.cascadeSet = function( array ){
-    for(var b = 0; b < array.length; b++ ){
-      var s = array[b];
+    for(var i = 0; i < array.length; i++ ){
+      var s = array[i];
       var sprite = this.container.children[s];
-      this.reveal( sprite );
+      if(sprite != undefined){
+        this.reveal( sprite );
+      }
     }
   },
 

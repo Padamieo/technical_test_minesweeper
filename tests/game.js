@@ -10,12 +10,23 @@ global.Array2D = require('Array2D');
 //var pixi = require('pixi.js');
 //pixi.dontSayHello = false;
 
+var sinon = require('sinon');
+
+
+function countField(field, value){
+  var c = 0;
+  var o = 0;
+  Array2D.eachCell(field, function(cell) {
+    if(cell == value){
+      c++;
+    }else{
+      o++;
+    }
+  });
+  return { others:o, contain:c };
+};
 
 describe('game.js', function() {
-
-  // before(function () {
-  //   g = new game();
-  // });
 
   describe('calculateBombs', function() {
 
@@ -50,22 +61,14 @@ describe('game.js', function() {
 
     before(function() {
         g = new game();
-        var v = 0;
+        v = 0;
         field = g.generateField();
     });
 
     it('default number of bombs 10', function() {
-      var i = 0;
-      var o = 0;
-      Array2D.eachCell(field, function(cell) {
-        if(cell == 1){
-          i++;
-        }else{
-          o++;
-        }
-      });
-      expect( i ).eql( 10 );
-      expect( o ).eql( 71 );
+      v = countField( field, 1 );
+      expect( v.contain ).eql( 10 );
+      expect( v.others ).eql( 71 );
     });
 
     it('default field size is 9 x 9', function() {
@@ -73,11 +76,86 @@ describe('game.js', function() {
       expect( field[0].length ).eql( 9 );
     });
 
+    // if in alt mode check amount of 2 to submit
+
   });
 
+  describe('insertRandom', function() {
+
+    beforeEach(function( done ) {
+        g = new game();
+        v = 0;
+        var bare = Array2D.build( 5, 5 );
+        base = Array2D.fill(bare, 0);
+        done();
+    });
+
+    xit('inserts 1 randomly into field', function() {
+      field = g.insertRandom( base, 1 );
+      v = countField( field, 1 );
+      console.log(v);
+      console.log(field);
+      expect( base ).not.to.equal( field );
+      //expect( v.contain ).eql( 1 );
+      // expect( v.others ).eql( 24 );
+    });
+
+    //alt mode will need to check for 2's (rocks)
+
+  });
+
+  describe('randomBetween', function() {
+    it("test 3 times", function(){
+      top = 9;
+      bot = 0;
+      for(var i = 0; i < 3; i++ ){
+        v = g.randomBetween( bot, top );
+        expect( v ).to.be.within(bot, top);
+      }
+    });
+  });
+
+  describe('cascadeSet', function() {
+
+    beforeEach(function(){
+      g = new game();
+      g.container = { children: [] };
+      for(var i = 0; i < 10; i++ ){
+        g.container.children.push({id:i});
+      }
+
+      v = 0;
+      array = [];
+      sinon.stub( g, 'reveal').callsFake(function( sprite ){
+        array.push(sprite.id);
+        v++;
+      });
+
+    });
+
+    it("reveal if sprite exists", function(){
+      localArray = [0,5,9];
+      g.cascadeSet( localArray );
+      expect( v ).eql( localArray.length );
+      expect( localArray ).eql( array );
+    });
+
+    it("do not process out of array", function(){
+      localArray = [0,5,10];
+      g.cascadeSet( localArray );
+      expect( v ).eql( 2 );
+    });
+
+    it("fail well", function(){
+      localArray = [];
+      g.cascadeSet( localArray );
+      expect( v ).eql( 0 );
+    });
+
+  });
 
   /*
-  describe('test init function', function() {
+  describe('init', function() {
 
     // it('should return -1 when the value is not present', function() {
     //   document.body.innerHTML = '<div>hola</div>';
