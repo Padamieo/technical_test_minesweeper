@@ -28,6 +28,64 @@ function countField(field, value){
 
 describe('game.js', function() {
 
+  describe('generateField', function() {
+
+    before(function() {
+        g = new game();
+        v = 0;
+        field = g.generateField();
+    });
+
+    it('default number of bombs 10', function() {
+      v = countField( field, 1 );
+      expect( v.contain ).eql( 10 );
+      expect( v.others ).eql( 71 );
+    });
+
+    it('default field size is 9 x 9', function() {
+      expect( field.length ).eql( 9 );
+      expect( field[0].length ).eql( 9 );
+    });
+
+    // if in alt mode check amount of 2 to submit
+
+  });
+
+  describe('insertRandom', function() {
+
+    beforeEach(function( done ) {
+        size = 5;
+        g = new game();
+        g.gridSize = size;
+        v = 0;
+        var bare = Array2D.build( size, size );
+        base = Array2D.fill(bare, 0);
+        done();
+    });
+
+    it('inserts 1 randomly into field', function() {
+      field = g.insertRandom( base, 1 );
+      v = countField( field, 1 );
+      expect( base ).not.to.equal( field );
+      expect( v.contain ).eql( 1 );
+      expect( v.others ).eql( 24 );
+    });
+
+    //alt mode will need to check for 2's (rocks)
+
+  });
+
+  describe('randomBetween', function() {
+    it("test 3 times", function(){
+      top = 9;
+      bot = 0;
+      for(var i = 0; i < 3; i++ ){
+        v = g.randomBetween( bot, top );
+        expect( v ).to.be.within(bot, top);
+      }
+    });
+  });
+
   describe('calculateBombs', function() {
 
     beforeEach(function() {
@@ -56,63 +114,68 @@ describe('game.js', function() {
 
   });
 
+  // describe('touchDifferentiator', function(){
+  //
+  //   it('touch reveal', function() {
+  //     g.touchDifferentiator( sprite, input, e );
+  //   });
+  //
+  //   it('touch reveal', function() {
+  //     g.touchDifferentiator( sprite, input, e );
+  //   });
+  //
+  //   it('touch fallback destroy timer', function() {
+  //     g.touchDifferentiator( sprite, input, e );
+  //   });
+  //
+  // });
 
-  describe('generateField', function() {
+  describe('cascade', function() {
+    beforeEach(function(){
+      g = new game();
+      var bare = Array2D.build( 3, 3 );
+      var base = Array2D.fill(bare, 0);
+      g.field = g.insertSpecific( base, 2, 2, 1 );
+      g.container = { children: [] };
+      g.cascadeTime = 5;
 
-    before(function() {
-        g = new game();
-        v = 0;
-        field = g.generateField();
+      sinon.stub( g, 'addSprite').callsFake(function( r, c ){
+        temp = {};
+        temp.interactive = true
+        if( this.field[r][c] != 0 ){
+          temp.bomb = true;
+        }else{
+          temp.bomb = false;
+          var s = this.calculateNeighbourSum( r, c );
+          temp.neighbours = s;
+          temp.c = c;
+          temp.r = r;
+        }
+        g.container.children.push(temp);
+      });
+
+      g.generateSprites();
+
+      v = 0;
+      array = [];
+      sinon.stub( g, 'cascadeSet').callsFake(function( batch ){
+        array.push(batch);
+        v++;
+      });
+
     });
 
-    it('default number of bombs 10', function() {
-      v = countField( field, 1 );
-      expect( v.contain ).eql( 10 );
-      expect( v.others ).eql( 71 );
-    });
-
-    it('default field size is 9 x 9', function() {
-      expect( field.length ).eql( 9 );
-      expect( field[0].length ).eql( 9 );
-    });
-
-    // if in alt mode check amount of 2 to submit
-
-  });
-
-  describe('insertRandom', function() {
-
-    beforeEach(function( done ) {
-        g = new game();
-        v = 0;
-        var bare = Array2D.build( 5, 5 );
-        base = Array2D.fill(bare, 0);
+    it("check secondry cascadeTime", function( done ){
+      g.cascade( 0, 0 );
+      expect( array.length ).eql( 1 );
+      expect( g.container.children.length ).eql( 9 );
+      setTimeout(function(){
+        expect( array.length ).eql( 2 );
+        expect( array[1][0] ).eql( 4 );
         done();
+      }, g.cascadeTime*1.5 );
     });
 
-    xit('inserts 1 randomly into field', function() {
-      field = g.insertRandom( base, 1 );
-      v = countField( field, 1 );
-      console.log(v);
-      console.log(field);
-      expect( base ).not.to.equal( field );
-      //expect( v.contain ).eql( 1 );
-      // expect( v.others ).eql( 24 );
-    });
-
-    //alt mode will need to check for 2's (rocks)
-
-  });
-
-  describe('randomBetween', function() {
-    it("test 3 times", function(){
-      top = 9;
-      bot = 0;
-      for(var i = 0; i < 3; i++ ){
-        v = g.randomBetween( bot, top );
-        expect( v ).to.be.within(bot, top);
-      }
-    });
   });
 
   describe('cascadeSet', function() {

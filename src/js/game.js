@@ -13,6 +13,7 @@ var game = function(){
   this.revealed = 0;
   this.unrevealed = 0;
   this.bombRatio = 12;
+  this.cascadeTime = 150;
 
   this.init = function( mobile ){
 
@@ -113,10 +114,10 @@ var game = function(){
   },
 
   this.insertRandom = function( array, value ){
-      var a = this.randomBetween( 0, this.gridSize-1 );
-      var b = this.randomBetween( 0, this.gridSize-1 );
-      if(array[a][b] == 0){
-        array = Array2D.set( array, a, b, value );
+      var r = this.randomBetween( 0, this.gridSize-1 );
+      var c = this.randomBetween( 0, this.gridSize-1 );
+      if(array[r][c] == 0){
+        array = this.insertSpecific( array, r, c, value );
       }else{
         array = this.insertRandom( array, value );
       }
@@ -135,6 +136,21 @@ var game = function(){
     return number;
   },
 
+  this.insertSpecific = function( array, r, c, value ){
+    return Array2D.set( array, r, c, value );
+  },
+
+  this.generateSprites = function (){
+    for(var r = 0; r < this.field.length; r++ ){
+      for(var c = 0; c < this.field[r].length; c++ ){
+        this.addSprite( r, c );
+        if( this.field[r][c] == 0 ){
+          this.unrevealed = this.unrevealed + 1;
+        }
+      }
+    }
+  },
+
   this.setupGame = function( level ){
 
     if( level == undefined ){
@@ -151,15 +167,7 @@ var game = function(){
     this.unrevealed = 0;
 
     this.container = new PIXI.Container();
-
-    for(var r = 0; r < this.field.length; r++ ){
-      for(var c = 0; c < this.field[r].length; c++ ){
-        this.addSprite( r, c );
-        if( this.field[r][c] == 0 ){
-          this.unrevealed = this.unrevealed + 1;
-        }
-      }
-    }
+    this.generateSprites();
 
     this.container.x = (this.canvas.renderer.width / 2) - (this.container.width / 2)+22.5;
     this.container.y = (this.canvas.renderer.height / 2) - (this.container.height / 2);
@@ -337,7 +345,7 @@ var game = function(){
     var localRef = this;
     setTimeout(function() {
       localRef.cascadeSet( batchTwo );
-    }, 150);
+    }, localRef.cascadeTime );
 
   },
 
