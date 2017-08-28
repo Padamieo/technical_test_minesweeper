@@ -80,10 +80,13 @@ var game = function(){
     var localRef = this;
     var spriteSheetPromise = new Promise(function(resolve, reject) {
       var loader = new PIXI.loaders.Loader();
-      loader.add('levels', 'levels/levels.json', function (e) {
+      // loader.add('levels', 'levels/levels.json', function (e) {
+      //   localRef.levels = e.data;
+      // });
+      // loader.add('placeholder.png', 'img/spritesheet.json');
+      loader.add('levels', './src/levels/levels.json', function (e) {
         localRef.levels = e.data;
       });
-      loader.add('placeholder.png', 'img/spritesheet.json');
       loader.on("complete", resolve );
       loader.load();
     });
@@ -427,7 +430,7 @@ var game = function(){
   },
 
   this.showResult = function (){
-    //TODO : show outcome to userAgent
+    //TODO : show outcome to user
     setTimeout(function() {
       app.menuReset();
     }, 1000);

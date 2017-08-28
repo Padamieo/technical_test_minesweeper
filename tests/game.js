@@ -7,7 +7,7 @@ global.$ = global.jQuery = require('jquery');
 var game = require('../src/js/game.js');
 var g = '';
 global.Array2D = require('Array2D');
-//var pixi = require('pixi.js');
+var PIXI = require('pixi.js');
 //pixi.dontSayHello = false;
 
 var sinon = require('sinon');
@@ -24,6 +24,22 @@ function countField(field, value){
     }
   });
   return { others:o, contain:c };
+};
+
+
+function mockSprite( r, c ){
+  sprite = {};
+  sprite.interactive = true
+  if( g.field[r][c] != 0 ){
+    sprite.bomb = true;
+  }else{
+    sprite.bomb = false;
+    var s = g.calculateNeighbourSum( r, c );
+    sprite.neighbours = s;
+    sprite.c = c;
+    sprite.r = r;
+  }
+  return sprite;
 };
 
 describe('game.js', function() {
@@ -116,8 +132,18 @@ describe('game.js', function() {
 
   // describe('touchDifferentiator', function(){
   //
+  //   beforeEach( '', function(){
+  //
+  //
+  //     sinon.stub( g, 'flag').callsFake(function( r, c ){
+  //       sprite
+  //     });
+  //
+  //   });
+  //
   //   it('touch reveal', function() {
   //     g.touchDifferentiator( sprite, input, e );
+  //     expect().eql();
   //   });
   //
   //   it('touch reveal', function() {
@@ -140,17 +166,7 @@ describe('game.js', function() {
       g.cascadeTime = 5;
 
       sinon.stub( g, 'addSprite').callsFake(function( r, c ){
-        temp = {};
-        temp.interactive = true
-        if( this.field[r][c] != 0 ){
-          temp.bomb = true;
-        }else{
-          temp.bomb = false;
-          var s = this.calculateNeighbourSum( r, c );
-          temp.neighbours = s;
-          temp.c = c;
-          temp.r = r;
-        }
+        temp = mockSprite( r, c );
         g.container.children.push(temp);
       });
 
@@ -216,6 +232,43 @@ describe('game.js', function() {
     });
 
   });
+
+  /*
+  describe('animatedFlag', function() {
+
+    beforeEach(function( done ){
+      g = new game();
+      spritesLoaded = g.loadSpriteSheet();
+      spritesLoaded.then(function(result) {
+        console.log(result);
+        done();
+      }, function(err) {
+        //console.log(err);
+        console.log(err);
+        done();
+      });
+
+      // g.container = { children: [] };
+      // for(var i = 0; i < 10; i++ ){
+      //   g.container.children.push({id:i});
+      // }
+      //
+      // v = 0;
+      // array = [];
+      // sinon.stub( PIXI.Texture, 'fromFrame').callsFake(function( spriteName ){
+      //   // array.push(sprite.id);
+      //   // v++;
+      //   return 'something';
+      // });
+
+    });
+
+    it('return animation', function() {
+      //var arrayAnimation = g.animatedFlag();
+    });
+
+  });
+  */
 
   /*
   describe('init', function() {
