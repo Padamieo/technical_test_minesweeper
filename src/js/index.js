@@ -1,16 +1,23 @@
+global.$ = global.jQuery = require('jquery');
 
 var app = {
-  intialized: false
+  intialized: false,
+  autoboot: true
 };
 
-app.init = function ( mobile ) {
-  // setup ui menu
+// console.log(app);
+// global.app = app;
 
-  // same time setup basics
-  this.game = new game();
-  this.game.init( mobile ); // TODO: make this a promise so we know when we are ready
-  this.intialized = true;
-  app.prepActions();
+app.init = function () {
+  this.mobile = /Mobi/.test(navigator.userAgent);
+
+  if(this.autoboot){
+    global.game = require('game');
+    this.game = new game();
+    this.game.init( this.mobile ); // TODO: make this a promise so we know when we are ready
+    this.intialized = true;
+    app.prepActions();
+  }
 
 };
 
@@ -47,8 +54,7 @@ app.menuReset = function(){
 
 // this is our application starting point
 $( document ).ready(function() {
-  var mobile = /Mobi/.test(navigator.userAgent);
-  app.init( mobile );
+  app.init();
 });
 
 module.exports = app;

@@ -11,6 +11,10 @@ To develop you will need to have the following on your system.
 * Grunt : [http://gruntjs.com](http://gruntjs.com)
 * [Google Chrome](http://www.google.com/chrome/) or similar modern browser.
 
+#### Run tests
+covers, jshint, mocha and instanbul coverage information in /coverage/lcov-report/index.html
+* grunt test
+
 #### Todo:
 * win condition - needs animation and better visuals
 * lose condition

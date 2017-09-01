@@ -1,14 +1,26 @@
+//pixi = require("pixi.js");
+stats = require("stats.js");
+Array2D = require("array2d");
+
 var game = function(){
 
+  this.gridSize = 9;
+  this.flagHoldDuration = 500;
+  this.mode = "default";
+  this.currentlevel = 1;
+  this.vibration = false;
+  this.mobile = false;
+  this.revealed = 0;
+  this.unrevealed = 0;
+  this.bombRatio = 12;
+  this.cascadeTime = 150;
+
   this.init = function( mobile ){
-    console.log("game init");
+
+    PIXI = require("pixi.js");
 
     this.mobile = mobile;
-    this.mode = "default";
     //this.state = "pending";
-    this.gridSize = 9;
-    this.flagHoldDuration = 500;
-    this.currentlevel = 1;
 
     if(!this.mobile){
       this.disableRightClick();
@@ -25,6 +37,7 @@ var game = function(){
 
     document.body.appendChild(this.canvas.view);
     $(this.canvas.view).attr('id', 'canvas');
+
     var localRef = this;
 
     var spriteSheetPromise = this.loadSpriteSheet();
@@ -32,7 +45,7 @@ var game = function(){
     spriteSheetPromise.then(function(result) {
       //localRef.setupGame( this.currentlevel );
     }, function(err) {
-      console.log(err);
+      //console.log(err);
     });
 
     this.setupStats();
@@ -48,10 +61,10 @@ var game = function(){
 
   this.setupStats = function(){
     if(window.location.host == "localhost:3000"){
-        stats = new Stats();
-        stats.domElement.style.position = 'absolute';
-        stats.domElement.style.top = '0px';
-        document.body.appendChild(stats.domElement);
+        this.stats = new stats();
+        this.stats.domElement.style.position = 'absolute';
+        this.stats.domElement.style.top = '0px';
+        document.body.appendChild(this.stats.domElement);
     }
   },
 
@@ -67,10 +80,13 @@ var game = function(){
     var localRef = this;
     var spriteSheetPromise = new Promise(function(resolve, reject) {
       var loader = new PIXI.loaders.Loader();
-      loader.add('levels', 'levels/levels.json', function (e) {
+      // loader.add('levels', 'levels/levels.json', function (e) {
+      //   localRef.levels = e.data;
+      // });
+      // loader.add('placeholder.png', 'img/spritesheet.json');
+      loader.add('levels', './src/levels/levels.json', function (e) {
         localRef.levels = e.data;
       });
-      loader.add('placeholder.png', 'img/spritesheet.json');
       loader.on("complete", resolve );
       loader.load();
     });
@@ -91,10 +107,51 @@ var game = function(){
   },
 
   this.generateField = function(){
-    // TODO: finish generating playing field
     var initiated = Array2D.build( this.gridSize, this.gridSize );
     var bare = Array2D.fill( initiated, 0 );
-    console.log(bare);
+    var numberOfBombs = this.calculateBombs();
+    for (i = 0; i < numberOfBombs; i++) {
+      bare = this.insertRandom( bare, 1 );
+    }
+    return bare;
+  },
+
+  this.insertRandom = function( array, value ){
+      var r = this.randomBetween( 0, this.gridSize-1 );
+      var c = this.randomBetween( 0, this.gridSize-1 );
+      if(array[r][c] == 0){
+        array = this.insertSpecific( array, r, c, value );
+      }else{
+        array = this.insertRandom( array, value );
+      }
+      return array;
+  },
+
+  this.randomBetween = function( min, max ){
+    return Math.floor( Math.random()*( max - min + 1 ) + min );
+  },
+
+  this.calculateBombs = function(){
+    var spaced = this.gridSize*this.gridSize;
+    var bombRatio = ( this.bombRatio > 33 ? 33 : this.bombRatio );
+    var bombsToPlace = (spaced/100)*bombRatio;
+    var number = Math.ceil(bombsToPlace);
+    return number;
+  },
+
+  this.insertSpecific = function( array, r, c, value ){
+    return Array2D.set( array, r, c, value );
+  },
+
+  this.generateSprites = function (){
+    for(var r = 0; r < this.field.length; r++ ){
+      for(var c = 0; c < this.field[r].length; c++ ){
+        this.addSprite( r, c );
+        if( this.field[r][c] == 0 ){
+          this.unrevealed = this.unrevealed + 1;
+        }
+      }
+    }
   },
 
   this.setupGame = function( level ){
@@ -113,15 +170,7 @@ var game = function(){
     this.unrevealed = 0;
 
     this.container = new PIXI.Container();
-
-    for(var r = 0; r < this.field.length; r++ ){
-      for(var c = 0; c < this.field[r].length; c++ ){
-        this.addSprite( r, c );
-        if( this.field[r][c] == 0 ){
-          this.unrevealed = this.unrevealed + 1;
-        }
-      }
-    }
+    this.generateSprites();
 
     this.container.x = (this.canvas.renderer.width / 2) - (this.container.width / 2)+22.5;
     this.container.y = (this.canvas.renderer.height / 2) - (this.container.height / 2);
@@ -217,6 +266,7 @@ var game = function(){
 
     this.container.addChild(temp);
 
+    return 'boop';
   },
 
   this.touchDifferentiator = function( sprite, input, e ) {
@@ -298,15 +348,17 @@ var game = function(){
     var localRef = this;
     setTimeout(function() {
       localRef.cascadeSet( batchTwo );
-    }, 150);
+    }, localRef.cascadeTime );
 
   },
 
   this.cascadeSet = function( array ){
-    for(var b = 0; b < array.length; b++ ){
-      var s = array[b];
+    for(var i = 0; i < array.length; i++ ){
+      var s = array[i];
       var sprite = this.container.children[s];
-      this.reveal( sprite );
+      if(sprite != undefined){
+        this.reveal( sprite );
+      }
     }
   },
 
@@ -378,7 +430,7 @@ var game = function(){
   },
 
   this.showResult = function (){
-    //TODO : show outcome to userAgent
+    //TODO : show outcome to user
     setTimeout(function() {
       app.menuReset();
     }, 1000);
@@ -402,4 +454,5 @@ var game = function(){
   };
 
 };
-//modules.exports = game;
+
+module.exports = game;
