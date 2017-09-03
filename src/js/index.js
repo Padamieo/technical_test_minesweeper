@@ -5,20 +5,16 @@ var app = {
   autoboot: true
 };
 
-// console.log(app);
-// global.app = app;
-
 app.init = function () {
-  this.mobile = /Mobi/.test(navigator.userAgent);
-
   if(this.autoboot){
+    this.mobile = /Mobi/.test(navigator.userAgent);
+    global.app = app;
     global.game = require('game');
     this.game = new game();
     this.game.init( this.mobile ); // TODO: make this a promise so we know when we are ready
     this.intialized = true;
     app.prepActions();
   }
-
 };
 
 app.vibrationSupport = function (){

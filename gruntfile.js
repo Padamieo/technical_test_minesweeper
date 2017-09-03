@@ -109,12 +109,12 @@ module.exports = function(grunt){
 		mochaTest: {
 		  test: {
 				require: 'mocha-jsdom',
-		    src: ['tests/game.js']
+		    src: ['test/test.game.js']
 		  }
 		},
 
 		mocha_istanbul: {
-		 	src: 'tests',
+		 	src: 'test/test.game.js',
     },
 
 		jshint: {

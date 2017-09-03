@@ -35,5 +35,8 @@
     "array2d": "0.0.5",
     "jquery": "^3.2.1",
     "pixi.js": "^4.5.4"
+  },
+  "scripts": {
+    "test": "mocha"
   }
 }

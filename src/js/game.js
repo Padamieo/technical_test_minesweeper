@@ -14,6 +14,7 @@ var game = function(){
   this.unrevealed = 0;
   this.bombRatio = 12;
   this.cascadeTime = 150;
+  this.resultTimeOut = 1000;
 
   this.init = function( mobile ){
 
@@ -80,13 +81,10 @@ var game = function(){
     var localRef = this;
     var spriteSheetPromise = new Promise(function(resolve, reject) {
       var loader = new PIXI.loaders.Loader();
-      // loader.add('levels', 'levels/levels.json', function (e) {
-      //   localRef.levels = e.data;
-      // });
-      // loader.add('placeholder.png', 'img/spritesheet.json');
-      loader.add('levels', './src/levels/levels.json', function (e) {
+      loader.add('levels', 'levels/levels.json', function (e) {
         localRef.levels = e.data;
       });
+      loader.add('placeholder.png', 'img/spritesheet.json');
       loader.on("complete", resolve );
       loader.load();
     });
@@ -395,7 +393,9 @@ var game = function(){
           this.revealed++;
         }
         // may want animation, then reveal
+        //console.log(sprite.texture);
         sprite.texture = newTexture;
+        //console.log(sprite.texture);
         sprite.animationSpeed = 0;
         sprite.texture.update();
 
@@ -433,7 +433,7 @@ var game = function(){
     //TODO : show outcome to user
     setTimeout(function() {
       app.menuReset();
-    }, 1000);
+    }, this.resultTimeOut );
   },
 
   this.cleanUp = function(){
@@ -449,7 +449,7 @@ var game = function(){
       setTimeout(function() {
         $( "#message" ).hide();
         app.menuReset();
-      }, 1000);
+      }, this.resultTimeOut );
     }
   };
 
