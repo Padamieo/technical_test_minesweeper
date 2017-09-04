@@ -1,46 +1,26 @@
-var assert = require('assert');
-var expect = require('expect.js');
-this.jsdom = require('jsdom-global')();
-//$ = require('jquery');
-//global.$ = global.jQuery
-global.game = require('../src/js/game.js');
-var index = require('../src/js/index.js');
-index.autoboot = false; // this prevent auto load up of game from jquery
+'use strict';
 
-describe('index.js', function() {
+/* PIXI - lets not mock it */
+var PIXI = require('pixi.js');
+PIXI.utils.skipHello(); // hide default banner
 
-  describe('startup', function() {
+global.$ = global.jQuery = require('jquery');
 
-    // var $
-    // jsdom();
-    //
-    // before(function () {
-    //   $ = require('jquery');
-    //   field = g.generateField();
-    // });
-    //
-    // it('default jquery test', function() {
-    //   document.body.innerHTML = '<div>hola</div>';
-    //   expect($("div").html()).eql('hola');
-    // });
+var sinon = require('sinon');
 
-    it('jquery test', function() {
+describe('Basics', function (){
+
+    it('PIXI should exist as a global object', function (){
+        expect(PIXI).to.be.an('object');
+    });
+
+    it('jQuery default function test', function() {
       document.body.innerHTML = '<div>hola</div>';
-      //console.log(document.body.innerHTML);
-      this.timeout(1000);
-      $( document ).ready(function() {
-        console.log("rrresult");
-        console.log($("div").html());
-        //expect($("div").html()).eql('hola');
-      });
-
+      expect($("div").html()).eql('hola');
     });
-
-    it('vibration', function() {
-      var b = index.vibrationSupport();
-      expect( b ).eql( b );
-    });
-
-  });
 
 });
+
+//require('./game');
+
+require('./app');

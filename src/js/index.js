@@ -7,9 +7,11 @@ var app = {
 
 app.init = function () {
   if(this.autoboot){
-    this.mobile = /Mobi/.test(navigator.userAgent);
-    global.app = app;
-    global.game = require('game');
+    this.mobile = (/Mobi/.test(navigator.userAgent) ? false : true );
+    global.app = this;
+    if( global.game == undefined ){
+      global.game = require('game');
+    }
     this.game = new game();
     this.game.init( this.mobile ); // TODO: make this a promise so we know when we are ready
     this.intialized = true;
@@ -18,8 +20,8 @@ app.init = function () {
 };
 
 app.vibrationSupport = function (){
-  navigator.vibrate = navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
-  return (navigator.vibrate ? true : false );
+  navigator.v =  navigator.vibrate || navigator.webkitVibrate || navigator.mozVibrate || navigator.msVibrate;
+  return (navigator.v ? true : false );
 };
 
 app.prepActions = function(){
