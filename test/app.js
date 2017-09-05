@@ -8,6 +8,11 @@
 var index = require('../src/js/index.js');
 index.autoboot = false; // this prevent auto load up of game from jquery
 
+var sinon = require('sinon');
+
+// global.game = require('.././src/js/game.js');
+// console.log(game);
+
 describe('index.js', function() {
 
   beforeEach( '', function(){
@@ -34,22 +39,21 @@ describe('index.js', function() {
   describe('init', function() {
 
     beforeEach(function(){
-      // sinon.stub( game ).callsFake(function( ){
-      //   console.log( "hello" );
-      // });
+      v = 0;
       global.game = function(){
         this.init = function(){
-          console.log("test");
+          v++;
         }
       };
     });
 
     it('default app auto boot', function(){
+      expect( typeof global.app ).eql( 'undefined' );
       index.autoboot = true;
-      index.init();
-      //console.log( global.game );
-      expect( index.mobile  ).eql( true );
-      //expect( global.app ).eql( undefined );
+      index.init( false );
+      expect( index.mobile  ).eql( false );
+      expect( v  ).eql( 1 );
+      expect( typeof global.app ).eql( 'object' );
     });
 
   });

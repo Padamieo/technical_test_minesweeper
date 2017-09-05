@@ -6,8 +6,6 @@ PIXI.utils.skipHello(); // hide default banner
 
 global.$ = global.jQuery = require('jquery');
 
-var sinon = require('sinon');
-
 describe('Basics', function (){
 
     it('PIXI should exist as a global object', function (){
@@ -21,6 +19,6 @@ describe('Basics', function (){
 
 });
 
-//require('./game');
-
 require('./app');
+
+require('./game');

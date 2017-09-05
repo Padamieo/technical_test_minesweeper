@@ -7,12 +7,12 @@ var app = {
 
 app.init = function () {
   if(this.autoboot){
-    this.mobile = (/Mobi/.test(navigator.userAgent) ? false : true );
+    this.mobile = /Mobi/.test(navigator.userAgent); // ? false : true );
     global.app = this;
     if( global.game == undefined ){
       global.game = require('game');
     }
-    this.game = new game();
+    this.game = new global.game();
     this.game.init( this.mobile ); // TODO: make this a promise so we know when we are ready
     this.intialized = true;
     app.prepActions();

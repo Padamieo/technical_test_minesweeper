@@ -15,57 +15,59 @@ var game = function(){
   this.bombRatio = 12;
   this.cascadeTime = 150;
   this.resultTimeOut = 1000;
+  this.reRoute = '';
+  this.localhost = "localhost:3000";
 
   this.init = function( mobile ){
-
-    PIXI = require("pixi.js");
-
-    this.mobile = mobile;
-    //this.state = "pending";
-
-    if(!this.mobile){
-      this.disableRightClick();
-    }else{
-      this.vibration = app.vibrationSupport();
-    }
-
-    this.canvas = new PIXI.Application(600, 800, {
-      backgroundColor : 0x15932a
-    });
-
-    // Scale mode for all textures, will retain pixelation
-    PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
-
-    document.body.appendChild(this.canvas.view);
-    $(this.canvas.view).attr('id', 'canvas');
-
     var localRef = this;
+    var intialized = new Promise(function(resolve, reject) {
 
-    var spriteSheetPromise = this.loadSpriteSheet();
+      PIXI = require("pixi.js");
 
-    spriteSheetPromise.then(function(result) {
-      //localRef.setupGame( this.currentlevel );
-    }, function(err) {
-      //console.log(err);
+      localRef.mobile = mobile;
+
+      if(!localRef.mobile){
+        localRef.disableRightClick();
+      }else{
+        localRef.vibration = app.vibrationSupport();
+      }
+
+      localRef.canvas = new PIXI.Application(600, 800, {
+        backgroundColor : 0x15932a
+      });
+
+      // Scale mode for all textures, will retain pixelation
+      PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
+
+      document.body.appendChild(localRef.canvas.view);
+      $(localRef.canvas.view).attr('id', 'canvas');
+
+      var spriteSheetPromise = localRef.loadSpriteSheet();
+
+      spriteSheetPromise.then(function(result) {
+        resolve(result);
+      }, function(err) {
+        reject(err);
+      });
+
+      localRef.setupStats();
+
+      // TODO: could not figure out a perfect scaling solution, used css in end
+      //this.canvas.width  = window.innerWidth;
+      //this.canvas.view.height = window.innerHeight;
+
+      //this.canvas.stage.scale.set(1.2);
+      //this.canvas.renderer.resize(window.innerWidth, window.innerHeight);
     });
-
-    this.setupStats();
-
-    // TODO: could not figure out a perfect scaling solution, used css in end
-    //this.canvas.width  = window.innerWidth;
-    //this.canvas.view.height = window.innerHeight;
-
-    //this.canvas.stage.scale.set(1.2);
-    //this.canvas.renderer.resize(window.innerWidth, window.innerHeight);
-
+    return intialized;
   },
 
   this.setupStats = function(){
-    if(window.location.host == "localhost:3000"){
-        this.stats = new stats();
-        this.stats.domElement.style.position = 'absolute';
-        this.stats.domElement.style.top = '0px';
-        document.body.appendChild(this.stats.domElement);
+    if( window.location.host == this.localhost ){
+      this.stats = new stats();
+      this.stats.domElement.style.position = 'absolute';
+      this.stats.domElement.style.top = '0px';
+      document.body.appendChild(this.stats.domElement);
     }
   },
 
@@ -81,11 +83,12 @@ var game = function(){
     var localRef = this;
     var spriteSheetPromise = new Promise(function(resolve, reject) {
       var loader = new PIXI.loaders.Loader();
-      loader.add('levels', 'levels/levels.json', function (e) {
+      loader.add('levels', localRef.reRoute+'levels/levels.json', function (e) {
         localRef.levels = e.data;
       });
-      loader.add('placeholder.png', 'img/spritesheet.json');
+      loader.add('placeholder.png', localRef.reRoute+'img/spritesheet.json');
       loader.on("complete", resolve );
+      loader.on("error", reject );
       loader.load();
     });
     return spriteSheetPromise;
@@ -96,8 +99,8 @@ var game = function(){
     //document.body.oncontextmenu
     //document.oncontextmenu
     document.oncontextmenu = function(event) {
-      //console.log(event.toElement.localName);
-      if(event.toElement.localName === 'canvas'){
+      console.log(event.target.localName);
+      if(event.target.localName === 'canvas'){
         event.preventDefault();
         return false;
       }

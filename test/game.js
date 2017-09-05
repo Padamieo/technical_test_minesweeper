@@ -1,5 +1,5 @@
-// var assert = require('assert');
-// var expect = require('expect.js');
+var assert = require('assert');
+var expect = require('expect.js');
 // var jsdom = require('jsdom-global')();
 // global.$ = global.jQuery = require('jquery');
 //
@@ -10,56 +10,103 @@
 // var PIXI = require('pixi.js');
 // //pixi.dontSayHello = false;
 //
-// var sinon = require('sinon');
-//
-// var resources = require('./resources.js');
-// resource = new resources( );
+var sinon = require('sinon');
 
 var game = require('../src/js/game.js');
 var g = '';
 
+var resource = new (require('./resources'));
+
 describe('game.js', function() {
 
-  before(function() {
+  beforeEach(function() {
+      document.body.innerHTML = '';
       g = new game();
+      d = {};
   });
 
-  /*
   describe('init', function() {
 
-    // it('should return -1 when the value is not present', function() {
-    //   document.body.innerHTML = '<div>hola</div>';
-    //   expect($("canvas").html()).eql('hola');
-    // });
-
-    xit('init defaults', function() {
-      //console.log(g.gridSize);
-      g.init( false );
-      // canvas = new PIXI.Application(600, 800, {
-      //   backgroundColor : 0x15932a
-      // });
-      //
-      // document.body.appendChild(canvas.view);
-      //this.timeout(1000);
-      console.log( "result" );
-      console.log( g.mobile );
-      //expect( field ).eql( field );
-    });
-
-    xit('something', function(){
-      g.init( false );
-      console.log(g.levels);
+    xit('Unable to find', function(done){
+      this.timeout(5000);
+      //this fail and allow a buble up message
+      ready = g.init( false );
+      ready.then(function(result) {
+        console.log(result);
+        done();
+      }, function(err) {
+        // console.log( typeof err);
+        // console.log( err.message );
+        // console.log(err.includes("error"));
+        expect( err.message ).eql( "[XMLHttpRequest] Request failed. Status: 0, text: \"\"" );
+        done();
+      });
     })
 
+    it('loads up correctly', function(done){
+      var mobile = false;
+      var appRoot = require('app-root-path');
+      g.reRoute = appRoot+'/src/';
+      ready = g.init( false );
+      //this.timeout(500); //maybe needed if load takes longer later
+      ready.then(function(result) {
+
+        expect( g.mobile ).eql( mobile );
+
+        //confirm levels loaded look for custom empty field
+        expect( g.levels['empty'].length ).eql( 9 );
+        expect( g.levels['empty'][0].length ).eql( 9 );
+
+        //need to confirm
+
+        done();
+      }, function(err) {
+        console.log(err);
+        done();
+      });
+    });
 
   });
-  */
+
+  describe('setupStats', function() {
+
+    it('developement only stats addition', function() {
+      g.localhost = ''; //electron will serve file://
+      expect( g.stats ).eql( undefined );
+      g.setupStats();
+      expect( typeof g.stats ).eql( 'object' );
+    });
+
+    it('default no stats setup', function() {
+      expect( g.stats ).eql( undefined );
+      g.setupStats();
+      expect( typeof g.stats ).eql( 'undefined' );
+    });
+
+  });
+
+  describe('disableRightClick', function() {
+    xit('test', function() {
+      document.body.innerHTML = '<div id="menu" style="height:100px;width:100px;" >menu</div>'
+      + '<canvas id="canvas" style="height:100px;width:100px;" >';
+      g.disableRightClick();
+      var b = $( "#canvas" ).contextmenu();
+      console.log(b);
+
+      var b = $( "#menu" ).contextmenu();
+      console.log(b);
+      // $('#canvas').trigger({
+      //   type: 'mousedown',
+      //   which: 2
+      // });
+    });
+  });
 
   describe('generateField', function() {
 
-    before(function() {
-        v = 0;
+    beforeEach(function() {
         field = g.generateField();
+        v = '';
     });
 
     it('default number of bombs 10', function() {
@@ -102,11 +149,12 @@ describe('game.js', function() {
 
   describe('randomBetween', function() {
     it("test 3 times", function(){
-      top = 9;
-      bot = 0;
+      max = 9;
+      min = 0;
+      v = '';
       for(var i = 0; i < 3; i++ ){
-        v = g.randomBetween( bot, top );
-        expect( v ).to.be.within(bot, top);
+        v = g.randomBetween( min, max );
+        expect( v ).to.be.within( min, max );
       }
     });
   });
@@ -118,6 +166,7 @@ describe('game.js', function() {
     });
 
     it('default spaces 9x9 bombs', function() {
+      // console.log(g);
       expect( g.calculateBombs() ).eql( 10 );
     });
 
@@ -164,6 +213,41 @@ describe('game.js', function() {
       array = g.insertSpecific( base, 0, 0, 2 );
       v = resource.countField( array, 2 );
       expect( v.contain ).eql( 1 );
+    });
+
+  });
+
+  describe('setupGame', function() {
+
+    xit('default setup', function() {
+      g.init()
+      g.setupGame();
+      //confirm elements exist
+    });
+
+  });
+
+  describe('setupIndicator', function() {
+
+    xit('added and alpha 0', function() {
+      g.init()
+      g.setupIndicator();
+      //confirm elements exist
+      console.log(g.canvas.stage.children);
+      expect( g.canvas.stage.children.length ).eql( 1 );
+
+    });
+
+  });
+
+  describe('addSprite', function() {
+
+    xit('add a single sprite', function() {
+      // g.init()
+      // g.setupIndicator();
+      // //confirm elements exist
+      // console.log(g.canvas.stage.children);
+      // expect( g.canvas.stage.children.length ).eql( 1 );
     });
 
   });
@@ -219,7 +303,7 @@ describe('game.js', function() {
 
     });
 
-    it("check secondry cascadeTime", function( done ){
+    it("check secondry after cascadeTime", function( done ){
       g.cascade( 0, 0 );
       expect( array.length ).eql( 1 );
       expect( g.container.children.length ).eql( 9 );
