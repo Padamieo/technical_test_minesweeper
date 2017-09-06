@@ -30,9 +30,9 @@ var resources = function( ){
   },
 
   this.buildField = function( size ){
-    s = ( size == undefined ? 3 : size );
+    var s = ( size == undefined ? 3 : size );
     var bare = Array2D.build( s, s );
-    var base = Array2D.fill(bare, 0);
+    var base = Array2D.fill( bare, 0 );
     return base;
   },
 
@@ -55,6 +55,22 @@ var resources = function( ){
       loader.load();
     });
     return spriteSheetPromise;
+  },
+
+  this.removeTextureCache = function(){
+    for (var textureUrl in PIXI.utils.BaseTextureCache) {
+      delete PIXI.utils.BaseTextureCache[textureUrl];
+    }
+    for (var textureUrl in PIXI.utils.TextureCache) {
+      delete PIXI.utils.TextureCache[textureUrl];
+    }
+
+    // if you use loader like this: var loader = new PIXI.loaders.Loader();
+    // it keeps all the img elements and doesn't have destroy method
+    // for (var textureUrl in loader.resources) {
+    //   delete loader.resources.data;
+    //   delete loader.resources;
+    // }
   }
 
 };

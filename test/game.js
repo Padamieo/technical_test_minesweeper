@@ -2,14 +2,14 @@ var assert = require('assert');
 var expect = require('expect.js');
 // var jsdom = require('jsdom-global')();
 // global.$ = global.jQuery = require('jquery');
-//
+
 // //var index = require('../src/js/index.js');
 // var game = require('../src/js/game.js');
 // //var g = '';
 // global.Array2D = require('Array2D');
 // var PIXI = require('pixi.js');
 // //pixi.dontSayHello = false;
-//
+
 var sinon = require('sinon');
 
 var game = require('../src/js/game.js');
@@ -17,12 +17,14 @@ var g = '';
 
 var resource = new (require('./resources'));
 
+//var app = require('../src/js/index.js');
+
 describe('game.js', function() {
 
   beforeEach(function() {
       document.body.innerHTML = '';
       g = new game();
-      d = {};
+      //d = {};
   });
 
   describe('init', function() {
@@ -66,6 +68,10 @@ describe('game.js', function() {
       });
     });
 
+    afterEach(function(){
+      resource.removeTextureCache();
+    });
+
   });
 
   describe('setupStats', function() {
@@ -81,6 +87,37 @@ describe('game.js', function() {
       expect( g.stats ).eql( undefined );
       g.setupStats();
       expect( typeof g.stats ).eql( 'undefined' );
+    });
+
+  });
+
+  describe('vibrate', function() {
+
+    beforeEach(function() {
+      navigator.vibrate = function( value ){
+        v.c++;
+        v.value = value;
+      };
+      v = { c: 0, value: undefined };
+    });
+
+    it('none mobile device disregard request', function() {
+      g.vibrate( 10 );
+      expect( v.c ).eql( 0 );
+    });
+
+    it('mobile device no vibrate browser facility', function() {
+      g.mobile = true;
+      g.vibrate( 10 );
+      expect( v.c ).eql( 0 );
+    });
+
+    it('mobile device and vibrate browser facility avaliable', function() {
+      g.mobile = true;
+      g.vibration = true;
+      g.vibrate( 20 );
+      expect( v.c ).eql( 1 );
+      expect( v.value ).eql( 20 );
     });
 
   });
@@ -219,22 +256,90 @@ describe('game.js', function() {
 
   describe('setupGame', function() {
 
-    xit('default setup', function() {
-      g.init()
+    beforeEach(function( done ){
+      g.canvas = new PIXI.Application(400, 400);
+
+      // document.body.appendChild(localRef.canvas.view);
+      // $(localRef.canvas.view).attr('id', 'canvas');
+
+      var field = resource.buildField();
+      callsGenerator = 0;
+      sinon.stub( g, 'generateField').callsFake(function( ){
+        callsGenerator++;
+        return field;
+      });
+
+      // re-route for sprites when in testing location
+      var appRoot = require('app-root-path');
+      g.reRoute = appRoot+'/src/';
+
+      var spriteSheetPromise = g.loadSpriteSheet();
+      spriteSheetPromise.then(function(result) {
+        done();
+      }, function(err) {
+        console.log(err);
+      });
+
+      callsIndicator = 0;
+      sinon.stub( g, 'setupIndicator').callsFake(function(){
+        callsIndicator++;
+      });
+
+      // prevent function action
+      sinon.stub( g, 'generateSprites').callsFake(function(){});
+
+    });
+
+    it('default setup, generate random level', function() {
       g.setupGame();
-      //confirm elements exist
+      expect( g.canvas.stage.children.length ).eql( 1 );
+      expect( callsGenerator ).eql( 1 );
+      expect( g.field.length ).eql( 3 );
+    });
+
+    it('setup level that does not exists fallback', function() {
+      g.setupGame( 22 );
+      expect( g.canvas.stage.children.length ).eql( 1 );
+      expect( callsGenerator ).eql( 1 );
+      expect( g.field.length ).eql( 3 );
+    });
+
+    it('setup specific level', function() {
+      g.setupGame( 'empty' );
+      expect( g.canvas.stage.children.length ).eql( 1 );
+      expect( callsGenerator ).eql( 0 );
+      expect( g.field.length ).eql( 9 );
+    });
+
+    it('setup indicator for touch input', function() {
+      g.mobile = true;
+      g.setupGame();
+      expect( callsIndicator ).eql( 1 );
+    });
+
+    afterEach(function(){
+      resource.removeTextureCache();
     });
 
   });
 
   describe('setupIndicator', function() {
 
-    xit('added and alpha 0', function() {
-      g.init()
+    beforeEach(function(){
+      g.canvas = new PIXI.Application(400, 400);
+      // document.body.appendChild(g.canvas.view);
+      // $(g.canvas.view).attr('id', 'canvas');
+    });
+
+    it('added and alpha 0', function() {
+      expect( typeof g.indicator ).eql( 'undefined' );
       g.setupIndicator();
       //confirm elements exist
-      console.log(g.canvas.stage.children);
+      //console.log(g.canvas.stage.children);
+      //console.log(g.indicator);
+      expect( typeof g.indicator ).eql( 'object' );
       expect( g.canvas.stage.children.length ).eql( 1 );
+      expect( g.canvas.stage.children[0].alpha ).eql( 0 );
 
     });
 
@@ -242,9 +347,21 @@ describe('game.js', function() {
 
   describe('addSprite', function() {
 
+    beforeEach(function( done ){
+      var appRoot = require('app-root-path');
+      g.reRoute = appRoot+'/src/';
+
+      var spriteSheetPromise = g.loadSpriteSheet();
+      spriteSheetPromise.then(function(result) {
+        done();
+      }, function(err) {
+        console.log(err);
+      });
+
+    });
+
     xit('add a single sprite', function() {
-      // g.init()
-      // g.setupIndicator();
+      g.addSprite( 0, 0 );
       // //confirm elements exist
       // console.log(g.canvas.stage.children);
       // expect( g.canvas.stage.children.length ).eql( 1 );
@@ -252,31 +369,26 @@ describe('game.js', function() {
 
   });
 
-  // describe('touchDifferentiator', function(){
-  //
-  //   beforeEach( '', function(){
-  //
-  //
-  //     sinon.stub( g, 'flag').callsFake(function( r, c ){
-  //       sprite
-  //     });
-  //
-  //   });
-  //
-  //   it('touch reveal', function() {
-  //     g.touchDifferentiator( sprite, input, e );
-  //     expect().eql();
-  //   });
-  //
-  //   it('touch reveal', function() {
-  //     g.touchDifferentiator( sprite, input, e );
-  //   });
-  //
-  //   it('touch fallback destroy timer', function() {
-  //     g.touchDifferentiator( sprite, input, e );
-  //   });
-  //
-  // });
+  describe('touchDifferentiator', function(){
+
+    beforeEach(function(){
+
+    });
+
+    xit('touch reveal', function() {
+      g.touchDifferentiator( sprite, input, e );
+      expect().eql();
+    });
+
+    xit('touch reveal', function() {
+      g.touchDifferentiator( sprite, input, e );
+    });
+
+    xit('touch fallback destroy timer', function() {
+      g.touchDifferentiator( sprite, input, e );
+    });
+
+  });
 
   describe('cascade', function() {
 
@@ -379,36 +491,24 @@ describe('game.js', function() {
 
   });
 
-  // describe.only('reveal', function() {
-  //
-  //   before(function(){
-  //
-  //     base = resource.buildField();
-  //     g.field = g.insertSpecific( base, 2, 2, 1 );
-  //     sprite = resource.mockSprite( g, 0, 0 );
-  //     //console.log(sprite);
-  //
-  //     sinon.stub( PIXI.Texture, 'fromFrame').callsFake(function( sprite ){
-  //       return 'test';
-  //     });
-  //
-  //     // sinon.stub( sprite.texture, 'update').callsFake(function( sprite ){
-  //     //   return 'test';
-  //     // });
-  //
-  //   });
-  //
-  //   it("reveal sprite", function(){
-  //     sprite.bomb = true;
-  //     g.reveal( sprite );
-  //   });
-  //
-  // });
+  describe('reveal', function() {
 
-  /*
+    before(function(){
+
+    });
+
+    xit("reveal sprite", function(){
+      sprite.bomb = true;
+      g.reveal( sprite );
+    });
+
+  });
+
+
   describe('animatedFlag', function() {
 
     beforeEach(function( done ){
+
       spritesLoaded = g.loadSpriteSheet();
       spritesLoaded.then(function(result) {
         console.log(result);
@@ -434,25 +534,26 @@ describe('game.js', function() {
 
     });
 
-    it('return animation', function() {
+    xit('return animation', function() {
       //var arrayAnimation = g.animatedFlag();
     });
 
   });
-  */
 
-  // describe.only('flag', function() {
-  //
-  //   before(function(){
-  //     //same problem as reveal
-  //   });
-  //
-  //   it("reveal sprite", function(){
-  //     sprite.bomb = true;
-  //     g.reveal( sprite );
-  //   });
-  //
-  // });
+  describe('flag', function() {
+
+    before(function(){
+      //same problem as reveal
+      sprite = '';
+      sprite = resource.mockSprite( g, 0, 0 );
+    });
+
+    xit("reveal sprite", function(){
+      sprite.bomb = true;
+      g.reveal( sprite );
+    });
+
+  });
 
   describe('showResult', function() {
 

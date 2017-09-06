@@ -10,30 +10,11 @@ index.autoboot = false; // this prevent auto load up of game from jquery
 
 var sinon = require('sinon');
 
-// global.game = require('.././src/js/game.js');
-// console.log(game);
-
 describe('index.js', function() {
 
   beforeEach( '', function(){
     document.body.innerHTML = '';
     //console.log(sinon);
-  });
-
-  describe('vibration', function() {
-
-    //for some reason electron has navigator.vibrate as a function
-    it('electron default, true', function() {
-      var b = index.vibrationSupport();
-      expect( b ).eql( true );
-    });
-
-    it('default browser unsuported', function() {
-      navigator.vibrate = false;
-      var b = index.vibrationSupport();
-      expect( b ).eql( false );
-    });
-
   });
 
   describe('init', function() {
@@ -54,6 +35,22 @@ describe('index.js', function() {
       expect( index.mobile  ).eql( false );
       expect( v  ).eql( 1 );
       expect( typeof global.app ).eql( 'object' );
+    });
+
+  });
+
+  describe('vibration', function() {
+
+    //for some reason electron has navigator.vibrate as a function
+    it('electron default, true', function() {
+      var b = index.vibrationSupport();
+      expect( b ).eql( true );
+    });
+
+    it('default browser unsuported', function() {
+      navigator.vibrate = false;
+      var b = index.vibrationSupport();
+      expect( b ).eql( false );
     });
 
   });
