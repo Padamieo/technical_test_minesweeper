@@ -1,20 +1,11 @@
-// var assert = require('assert');
-// var expect = require('expect.js');
-// this.jsdom = require('jsdom-global')();
-// //$ = require('jquery');
-// //global.$ = global.jQuery
-//global.game = require('../src/js/game.js');
-
 var index = require('../src/js/index.js');
 index.autoboot = false; // this prevent auto load up of game from jquery
-
 var sinon = require('sinon');
 
 describe('index.js', function() {
 
   beforeEach( '', function(){
     document.body.innerHTML = '';
-    //console.log(sinon);
   });
 
   describe('init', function() {

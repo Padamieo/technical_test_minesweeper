@@ -1,45 +1,38 @@
 var assert = require('assert');
 var expect = require('expect.js');
-// var jsdom = require('jsdom-global')();
-// global.$ = global.jQuery = require('jquery');
-
-// //var index = require('../src/js/index.js');
-// var game = require('../src/js/game.js');
-// //var g = '';
-// global.Array2D = require('Array2D');
-// var PIXI = require('pixi.js');
-// //pixi.dontSayHello = false;
-
 var sinon = require('sinon');
-
 var game = require('../src/js/game.js');
 var g = '';
-
 var resource = new (require('./resources'));
-
-//var app = require('../src/js/index.js');
 
 describe('game.js', function() {
 
   beforeEach(function() {
       document.body.innerHTML = '';
       g = new game();
-      //d = {};
   });
 
   describe('init', function() {
 
-    xit('Unable to find', function(done){
-      this.timeout(5000);
-      //this fail and allow a buble up message
-      ready = g.init( false );
+    beforeEach(function() {
+      callsDisable = 0;
+      sinon.stub( g, 'disableRightClick').callsFake(function( ){
+        callsDisable++;
+      });
+
+      var appRoot = require('app-root-path');
+      g.reRoute = appRoot+'/src/';
+
+    });
+
+
+    it('Unable to find resources', function(done){
+      g.reRoute = '';
+      var ready = g.init( false );
       ready.then(function(result) {
         console.log(result);
         done();
       }, function(err) {
-        // console.log( typeof err);
-        // console.log( err.message );
-        // console.log(err.includes("error"));
         expect( err.message ).eql( "[XMLHttpRequest] Request failed. Status: 0, text: \"\"" );
         done();
       });
@@ -47,19 +40,34 @@ describe('game.js', function() {
 
     it('loads up correctly', function(done){
       var mobile = false;
-      var appRoot = require('app-root-path');
-      g.reRoute = appRoot+'/src/';
-      ready = g.init( false );
-      //this.timeout(500); //maybe needed if load takes longer later
+      var ready = g.init( mobile );
       ready.then(function(result) {
 
         expect( g.mobile ).eql( mobile );
 
-        //confirm levels loaded look for custom empty field
+        //confirm levels loaded in ready
         expect( g.levels['empty'].length ).eql( 9 );
         expect( g.levels['empty'][0].length ).eql( 9 );
 
-        //need to confirm
+        expect( callsDisable ).eql( 1 );
+
+        //need more confirmation of setup
+
+        done();
+      }, function(err) {
+        console.log(err);
+        done();
+      });
+    });
+
+    it('mobile Identifies and load correctly', function(done){
+      var mobile = true;
+      var ready = g.init( mobile );
+      ready.then(function(result) {
+
+        expect( g.mobile ).eql( mobile );
+        expect( callsDisable ).eql( 0 );
+        //expect( callsVibrateS ).eql( 1 );
 
         done();
       }, function(err) {
@@ -348,6 +356,10 @@ describe('game.js', function() {
   describe('addSprite', function() {
 
     beforeEach(function( done ){
+      g.canvas = new PIXI.Application(400, 400);
+      // document.body.appendChild(g.canvas.view);
+      // $(g.canvas.view).attr('id', 'canvas');
+
       var appRoot = require('app-root-path');
       g.reRoute = appRoot+'/src/';
 
@@ -358,34 +370,162 @@ describe('game.js', function() {
         console.log(err);
       });
 
+      g.container = new PIXI.Container();
+
+      g.field = resource.buildField();
+      g.field = g.insertSpecific( g.field , 2, 2, 1 );
+
     });
 
-    xit('add a single sprite', function() {
-      g.addSprite( 0, 0 );
-      // //confirm elements exist
-      // console.log(g.canvas.stage.children);
-      // expect( g.canvas.stage.children.length ).eql( 1 );
+    it('default single sprite setup', function() {
+      var sprite = g.addSprite( 0, 0 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+      expect( g.container.children.length ).eql( 1 );
+      expect( sprite.interactive ).eql( true );
+      expect( g.container.children[0].interactive ).eql( true );
+      expect( sprite.neighbours ).eql( 0 );
+      expect( sprite.x ).eql( 0 );
+      expect( sprite.y ).eql( 0 );
+
+      expect( typeof sprite._events['click'] ).eql( 'object' );
+      expect( typeof sprite._events['rightclick'] ).eql( 'object' );
+      // need to test texture change from grass to dirt on click
+    });
+
+    it('sprite mobile triggers', function() {
+      g.mobile = true;
+      var sprite = g.addSprite( 0, 0 );
+      expect( typeof sprite._events['touchstart'] ).eql( 'object' );
+      expect( typeof sprite._events['touchend'] ).eql( 'object' );
+      expect( typeof sprite._events['touchendoutside'] ).eql( 'object' );
+    });
+
+    it('sprite will shows neighbor bomb', function() {
+      var sprite = g.addSprite( 1, 1 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+      expect( sprite.neighbours ).eql( 1 );
+      // need to test texture change from grass to number on click
+    });
+
+    it('sprite is a hidden bomb', function() {
+      var sprite = g.addSprite( 2, 2 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+      expect( sprite.neighbours ).eql( undefined );
+      expect( sprite.bomb ).eql( true );
+      expect( g.container.children[0].bomb ).eql( true );
+      // need to test texture change from grass to bomb on click
+    });
+
+    it('field entry is rock, mode is default, default to grass', function() {
+      g.field = g.insertSpecific( g.field, 1, 1, 2 );
+      var sprite = g.addSprite( 1, 1 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+    });
+
+    it('sprite / field entry is a rock, mode is special', function() {
+      g.mode = 'special';
+      g.field = g.insertSpecific( g.field, 1, 1, 2 );
+      var sprite = g.addSprite( 1, 1 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'rock' );
+      var sprite_default = g.addSprite( 0, 0 );
+      expect( sprite_default._texture.textureCacheIds[0] ).eql( 'grass' );
+    });
+
+    afterEach(function(){
+      resource.removeTextureCache();
     });
 
   });
 
   describe('touchDifferentiator', function(){
 
-    beforeEach(function(){
+    beforeEach(function( done ){
+      g.canvas = new PIXI.Application(400, 400);
+      // document.body.appendChild(g.canvas.view);
+      // $(g.canvas.view).attr('id', 'canvas');
 
+      var appRoot = require('app-root-path');
+      g.reRoute = appRoot+'/src/';
+
+      var spriteSheetPromise = g.loadSpriteSheet();
+      spriteSheetPromise.then(function(result) {
+        done();
+      }, function(err) {
+        done();
+        console.log(err);
+      });
+
+      g.container = new PIXI.Container();
+
+      g.field = resource.buildField();
+      g.field = g.insertSpecific( g.field, 2, 2, 1 );
+
+      g.setupIndicator();
+
+      flagCalled = 0;
+      sinon.stub( g, 'flag').callsFake(function( ){
+        flagCalled++;
+      });
+
+      reavalCalled = 0;
+      sinon.stub( g, 'reveal').callsFake(function( ){
+        reavalCalled++;
+      });
     });
 
-    xit('touch reveal', function() {
-      g.touchDifferentiator( sprite, input, e );
-      expect().eql();
+    it('touch reveal', function() {
+      var sprite = g.addSprite( 0, 0 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+      expect(g.timer).eql( undefined );
+
+      g.touchDifferentiator( sprite, 'start', {} );
+
+      expect(g.timer.started).eql( true );
+
+      g.touchDifferentiator( sprite, 'end', {} );
+
+      expect(g.timer.started).eql( false );
+      expect( reavalCalled ).eql( 1 );
+      expect( flagCalled ).eql( 0 );
     });
 
-    xit('touch reveal', function() {
-      g.touchDifferentiator( sprite, input, e );
+    it('touch flag', function( done ) {
+      expect(g.flagHoldDuration).eql( 500 );
+      g.flagHoldDuration = 5;
+      var sprite = g.addSprite( 0, 0 );
+      expect(g.timer).eql( undefined );
+
+      g.touchDifferentiator( sprite, 'start', {} );
+      expect(g.timer.started).eql( true );
+
+      setTimeout(function(){
+        //expect(g.indicatorData.size).eql( 45 );
+        g.touchDifferentiator( sprite, 'end', {} );
+        expect( g.timer.started ).eql( false );
+        expect( reavalCalled ).eql( 0 );
+        expect( flagCalled ).eql( 1 );
+        done();
+      }, g.flagHoldDuration*1.5);
     });
 
-    xit('touch fallback destroy timer', function() {
-      g.touchDifferentiator( sprite, input, e );
+    xit('touch fallback destroy timer', function( done ) {
+      expect(g.flagHoldDuration).eql( 500 );
+      g.flagHoldDuration = 5;
+      var sprite = g.addSprite( 0, 0 );
+      expect(g.timer).eql( undefined );
+
+      g.touchDifferentiator( sprite, 'start', {} );
+
+      expect(g.timer.started).eql( true );
+
+      setTimeout(function(){
+        expect(g.timer).eql( undefined ); // timer should be destroyed
+        done();
+      }, g.flagHoldDuration*10);
+    });
+
+    afterEach(function(){
+      resource.removeTextureCache();
     });
 
   });
@@ -393,8 +533,7 @@ describe('game.js', function() {
   describe('cascade', function() {
 
     beforeEach(function(){
-      var bare = Array2D.build( 3, 3 );
-      var base = Array2D.fill(bare, 0);
+      base = resource.buildField();
       g.field = g.insertSpecific( base, 2, 2, 1 );
       g.container = { children: [] };
       g.cascadeTime = 5;
@@ -431,7 +570,6 @@ describe('game.js', function() {
   describe('cascadeSet', function() {
 
     beforeEach(function(){
-      g = new game(); // nned to remove this
       g.container = { children: [] };
       for(var i = 0; i < 10; i++ ){
         g.container.children.push({id:i});
@@ -487,19 +625,41 @@ describe('game.js', function() {
       expect( b ).eql( 2 );
     });
 
-    //may want to do more
-
   });
 
-  describe('reveal', function() {
+  describe('reveal', function( ) {
 
-    before(function(){
+    before(function( done ){
+      g.canvas = new PIXI.Application(400, 400);
+      // document.body.appendChild(g.canvas.view);
+      // $(g.canvas.view).attr('id', 'canvas');
+
+      var appRoot = require('app-root-path');
+      g.reRoute = appRoot+'/src/';
+
+      var spriteSheetPromise = g.loadSpriteSheet();
+      spriteSheetPromise.then(function(result) {
+        done();
+      }, function(err) {
+        done();
+        console.log(err);
+      });
+
+      g.container = new PIXI.Container();
+
+      g.field = resource.buildField();
+      g.field = g.insertSpecific( g.field, 2, 2, 1 );
 
     });
 
     xit("reveal sprite", function(){
-      sprite.bomb = true;
-      g.reveal( sprite );
+      var sprite = g.addSprite( 0, 0 );
+      // g.reveal( sprite );
+
+    });
+
+    afterEach(function(){
+      resource.removeTextureCache();
     });
 
   });
@@ -508,49 +668,81 @@ describe('game.js', function() {
   describe('animatedFlag', function() {
 
     beforeEach(function( done ){
+      resource.removeTextureCache(); //should not need this here, somewhere we are missing a this
 
-      spritesLoaded = g.loadSpriteSheet();
-      spritesLoaded.then(function(result) {
-        console.log(result);
+      var appRoot = require('app-root-path');
+      g.reRoute = appRoot+'/src/';
+
+      var spriteSheetPromise = g.loadSpriteSheet();
+      spriteSheetPromise.then(function(result) {
         done();
       }, function(err) {
-        //console.log(err);
-        console.log(err);
         done();
+        console.log(err);
       });
-
-      // g.container = { children: [] };
-      // for(var i = 0; i < 10; i++ ){
-      //   g.container.children.push({id:i});
-      // }
-      //
-      // v = 0;
-      // array = [];
-      // sinon.stub( PIXI.Texture, 'fromFrame').callsFake(function( spriteName ){
-      //   // array.push(sprite.id);
-      //   // v++;
-      //   return 'something';
-      // });
-
     });
 
-    xit('return animation', function() {
-      //var arrayAnimation = g.animatedFlag();
+    it('return 3 frame animation', function() {
+      var arrayAnimation = g.animatedFlag();
+      expect( arrayAnimation.length ).eql( 3 );
+      for(var i = 0; i < 3; i++ ){
+        expect( arrayAnimation[i].textureCacheIds[0] ).eql( 'flag'+i );
+      }
+    });
+
+    afterEach(function(){
+      resource.removeTextureCache();
     });
 
   });
 
   describe('flag', function() {
 
-    before(function(){
-      //same problem as reveal
-      sprite = '';
-      sprite = resource.mockSprite( g, 0, 0 );
+    beforeEach(function( done ){
+
+      var appRoot = require('app-root-path');
+      g.reRoute = appRoot+'/src/';
+
+      var spriteSheetPromise = g.loadSpriteSheet();
+      spriteSheetPromise.then(function(result) {
+        done();
+      }, function(err) {
+        done();
+        console.log(err);
+      });
+
+      g.container = new PIXI.Container();
+
+      g.field = resource.buildField();
+      g.field = g.insertSpecific( g.field, 2, 2, 1 );
+
     });
 
-    xit("reveal sprite", function(){
-      sprite.bomb = true;
-      g.reveal( sprite );
+    it("flag sprite", function(){
+      var sprite = g.addSprite( 0, 0 );
+      expect( sprite.animationSpeed ).eql( 0 );
+      g.flag( sprite );
+      expect( g.container.children.length ).eql( 1 );
+      expect( g.container.children[0]._textures.length ).eql( 3 );
+      expect( sprite._textures.length ).eql( 3 );
+      expect( sprite.animationSpeed ).eql( 0.05 );
+    });
+
+    it("flag & un flag sprite", function(){
+      var sprite = g.addSprite( 0, 0 );
+      sprite.flaged = undefined;
+      expect( sprite.flaged ).eql( undefined );
+      expect( sprite.animationSpeed ).eql( 0 );
+      g.flag( sprite );
+      expect( sprite.flaged ).eql( true );
+      expect( sprite.animationSpeed ).eql( 0.05 );
+      g.flag( sprite );
+      expect( sprite.flaged ).eql( false );
+      expect( sprite.animationSpeed ).eql( 0 );
+    });
+
+    afterEach(function(){
+      resource.removeTextureCache();
     });
 
   });
@@ -608,6 +800,10 @@ describe('game.js', function() {
       }, g.resultTimeOut*1.5 );
     });
 
+  });
+
+  afterEach(function(){
+    resource.removeTextureCache();
   });
 
 });

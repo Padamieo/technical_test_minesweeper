@@ -244,19 +244,19 @@ var game = function(){
       });
 
     }else{
-      // touch-only
+
       temp.on('touchstart', function(e){
         localRef.touchDifferentiator( this, 'start', e );
       });
       temp.on('touchend', function(e){
         localRef.touchDifferentiator( this, 'end', e );
       });
-      // temp.on('touchcancel', function(e){
-      //   localRef.touchDifferentiator( this, 'cancel', e );
-      // });
       temp.on('touchendoutside', function(e){
         localRef.touchDifferentiator( this, 'end', e );
       });
+      // temp.on('touchcancel', function(e){
+      //   localRef.touchDifferentiator( this, 'cancel', e );
+      // });
       // temp.on('touchmove', function(e){
       //   localRef.touchDifferentiator( this, 'move', e );
       // });
@@ -267,7 +267,7 @@ var game = function(){
 
     this.container.addChild(temp);
 
-    return 'boop';
+    return temp; // passing back information for testing
   },
 
   this.touchDifferentiator = function( sprite, input, e ) {
@@ -304,12 +304,11 @@ var game = function(){
         }
       });
       this.timer.start();
-
     }
 
-    if( input == "move" ){
-      // TODO: may want the indicator to follow users finger
-    }
+    // if( input == "move" ){
+    //   // TODO: may want the indicator to follow users finger
+    // }
 
     if( input == "end" ){
       var timeNow = new Date().getTime();
@@ -322,6 +321,10 @@ var game = function(){
       this.indicatorData.size = 100;
       this.timer.destroy();
     }
+
+    // if( input == "kill" ){
+    //   this.timer.destroy();
+    // }
 
   },
 
@@ -380,11 +383,10 @@ var game = function(){
         var newTexture = PIXI.Texture.fromFrame( "dirt" );
         sprite.interactive = false;
         if(sprite.bomb){
-          console.log("boom trigger end of game");
           newTexture = PIXI.Texture.fromFrame( "bomb" );
           this.vibrate( 500 );
           this.showResult();
-          //this.cleanUp(); // noted issue
+          //this.cleanUp(); // unkown element
         }else{
           var cal = this.calculateNeighbourSum(sprite.r, sprite.c );
           if( sprite.neighbours != 0 ){
@@ -439,10 +441,10 @@ var game = function(){
     }, this.resultTimeOut );
   },
 
-  this.cleanUp = function(){
-    // TODO : find way to clean up ready for a new game
-    // this.canvas.stage.removeChild(this.container);
-  },
+  // this.cleanUp = function(){
+  //   // TODO : find way to clean up ready for a new game
+  //   // this.canvas.stage.removeChild(this.container);
+  // },
 
   this.winCondition = function(){
     if(this.revealed >= this.unrevealed){
