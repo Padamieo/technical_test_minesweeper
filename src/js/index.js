@@ -7,13 +7,13 @@ var app = {
 
 app.init = function () {
   if(this.autoboot){
-    this.mobile = /Mobi/.test(navigator.userAgent); // ? false : true );
+    this.mobile = /Mobi/.test(navigator.userAgent);
     global.app = this;
     if( global.game == undefined ){
       global.game = require('game');
     }
     this.game = new global.game();
-    this.game.init( this.mobile ); // TODO: make this a promise so we know when we are ready
+    this.game.init( this.mobile ); // TODO: use init promise so we know when we are initialized
     this.intialized = true;
     app.prepActions();
   }
@@ -27,6 +27,7 @@ app.vibrationSupport = function (){
 app.prepActions = function(){
   var localRef = this;
   $( document ).on( "click", ".button", function() {
+
     //TODO: probably use handlebars or something for generating, this is placeholder simple method
     if(this.id === 'start1'){
       $( "#canvas" ).show();
@@ -50,7 +51,7 @@ app.menuReset = function(){
   });
 };
 
-// this is our application starting point
+// this is application starting point, has to be prevented from loading in tests
 $( document ).ready(function() {
   app.init();
 });

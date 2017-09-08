@@ -481,9 +481,9 @@ describe('game.js', function() {
       g.touchDifferentiator( sprite, 'start', {} );
 
       expect(g.timer.started).eql( true );
-
+      //console.log(g.indicatorData.size);
       g.touchDifferentiator( sprite, 'end', {} );
-
+      //console.log(g.indicatorData.size);
       expect(g.timer.started).eql( false );
       expect( reavalCalled ).eql( 1 );
       expect( flagCalled ).eql( 0 );
@@ -498,12 +498,20 @@ describe('game.js', function() {
       g.touchDifferentiator( sprite, 'start', {} );
       expect(g.timer.started).eql( true );
 
+      // var time = new Date().getTime();
+      // console.log(g.indicatorData.endTime + " " + time);
+
       setTimeout(function(){
         //expect(g.indicatorData.size).eql( 45 );
+
+        // var time = new Date().getTime();
+        // console.log(g.indicatorData.endTime + " " + time);
+
         g.touchDifferentiator( sprite, 'end', {} );
         expect( g.timer.started ).eql( false );
         expect( reavalCalled ).eql( 0 );
         expect( flagCalled ).eql( 1 );
+
         done();
       }, g.flagHoldDuration*1.5);
     });
@@ -629,10 +637,7 @@ describe('game.js', function() {
 
   describe('reveal', function( ) {
 
-    before(function( done ){
-      g.canvas = new PIXI.Application(400, 400);
-      // document.body.appendChild(g.canvas.view);
-      // $(g.canvas.view).attr('id', 'canvas');
+    beforeEach(function( done ){
 
       var appRoot = require('app-root-path');
       g.reRoute = appRoot+'/src/';
@@ -650,12 +655,63 @@ describe('game.js', function() {
       g.field = resource.buildField();
       g.field = g.insertSpecific( g.field, 2, 2, 1 );
 
+      callsWinCondition = 0;
+      sinon.stub( g, 'winCondition').callsFake(function( ){
+        callsWinCondition++;
+      });
+
     });
 
-    xit("reveal sprite", function(){
+    it("not interactive element, request reveal", function(){
       var sprite = g.addSprite( 0, 0 );
-      // g.reveal( sprite );
+      sprite.interactive = false;
+      g.reveal( sprite );
+      expect( callsWinCondition ).eql( 0 );
+      expect( sprite.interactive ).eql( false );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+    });
 
+    it("flagged, no action on request reveal", function(){
+      var sprite = g.addSprite( 0, 0 );
+      sprite.flaged = true;
+      sprite.texture = PIXI.Texture.fromFrame( "flag0" );
+      g.reveal( sprite );
+      expect( callsWinCondition ).eql( 0 );
+      expect( sprite.interactive ).eql( true );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'flag0' );
+    });
+
+    it("reveal dirt", function(){
+      var sprite = g.addSprite( 0, 0 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+      g.reveal( sprite );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'dirt' );
+      expect( callsWinCondition ).eql( 1 );
+    });
+
+    it("reveal bomb", function(){
+      var sprite = g.addSprite( 2, 2 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+      g.reveal( sprite );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'bomb' );
+      expect( callsWinCondition ).eql( 1 );
+    });
+
+    it("reveal dirt number", function(){
+      var sprite = g.addSprite( 1, 1 );
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+      g.reveal( sprite );
+      expect( sprite._texture.textureCacheIds[0] ).eql( '1' );
+      expect( callsWinCondition ).eql( 1 );
+    });
+
+    it("reveal dirt number, max limitation", function(){
+      var sprite = g.addSprite( 1, 1 );
+      sprite.neighbours = 9;
+      expect( sprite._texture.textureCacheIds[0] ).eql( 'grass' );
+      g.reveal( sprite );
+      expect( sprite._texture.textureCacheIds[0] ).eql( '8' );
+      expect( callsWinCondition ).eql( 1 );
     });
 
     afterEach(function(){

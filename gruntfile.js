@@ -106,16 +106,17 @@ module.exports = function(grunt){
       }
     },
 
-		mochaTest: {
-		  test: {
-				require: 'mocha-jsdom',
-		    src: ['test/test.game.js']
-		  }
-		},
+		run: {
+	    tests: {
+	      cmd: 'start npm test'
+	    }
+	  },
 
-		mocha_istanbul: {
-		 	src: 'test/test.game.js',
-    },
+		exec: {
+			test:{
+				cmd: 'npm test'
+			}
+		},
 
 		jshint: {
 			options: {
@@ -126,7 +127,7 @@ module.exports = function(grunt){
 
   });
 
-  // our default task, others will come later
+  // default task builds and serves
   grunt.registerTask('default', [
 		'copy:build',
 		'less',
@@ -135,16 +136,16 @@ module.exports = function(grunt){
     'watch'
   ]);
 
+	// serves up latest build
 	grunt.registerTask('serve', [
 		'browserSync',
 		'watch'
 	]);
 
-	//
+	// Run mocha tests over the game / app
 	grunt.registerTask('test', [
 		'jshint',
-		'mochaTest',
-		'mocha_istanbul'
+		'exec:test'
 	]);
 
 };

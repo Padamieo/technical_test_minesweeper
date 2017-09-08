@@ -1,4 +1,4 @@
-//pixi = require("pixi.js");
+PIXI = require("pixi.js");
 stats = require("stats.js");
 Array2D = require("array2d");
 
@@ -21,8 +21,6 @@ var game = function(){
   this.init = function( mobile ){
     var localRef = this;
     var intialized = new Promise(function(resolve, reject) {
-
-      PIXI = require("pixi.js");
 
       localRef.mobile = mobile;
 
@@ -212,14 +210,9 @@ var game = function(){
 
     temp.x = c * 55;
     temp.y = r * 55;
-
     temp.anchor.set(0.5);
-
-    // Opt-in to interactivity
     temp.interactive = true;
-    // Shows hand cursor
     temp.buttonMode = true;
-
     temp.animationSpeed = 0;
 
     if( this.field[r][c] != 0 ){
@@ -254,6 +247,7 @@ var game = function(){
       temp.on('touchendoutside', function(e){
         localRef.touchDifferentiator( this, 'end', e );
       });
+      // TODO: potential other input cases
       // temp.on('touchcancel', function(e){
       //   localRef.touchDifferentiator( this, 'cancel', e );
       // });
@@ -397,13 +391,10 @@ var game = function(){
           }
           this.revealed++;
         }
-        // may want animation, then reveal
-        //console.log(sprite.texture);
+        // TODO: may want animation, then reveal
         sprite.texture = newTexture;
-        //console.log(sprite.texture);
         sprite.animationSpeed = 0;
         sprite.texture.update();
-
         this.winCondition();
       }
     }
@@ -421,13 +412,11 @@ var game = function(){
   this.flag = function( sprite ){
     if(sprite.flaged == undefined || sprite.flaged == false ){
       sprite.flaged = true;
-
       sprite.textures = this.animatedFlag();
       sprite.animationSpeed = 0.05;
       sprite.gotoAndPlay(0);
       sprite.texture.update();
     }else{
-      //need to action revert somehow
       sprite.flaged = false;
       sprite.texture = PIXI.Texture.fromFrame( "grass" );
       sprite.animationSpeed = 0;
@@ -441,15 +430,14 @@ var game = function(){
     }, this.resultTimeOut );
   },
 
+  // TODO : find way to clean up ready for a new game house keeping
   // this.cleanUp = function(){
-  //   // TODO : find way to clean up ready for a new game
-  //   // this.canvas.stage.removeChild(this.container);
+  //  this.canvas.stage.removeChild(this.container);
   // },
 
   this.winCondition = function(){
     if(this.revealed >= this.unrevealed){
-      // TODO: this need serious polish
-      console.log( "Winner" );
+      // TODO: this need polish
       $( "#message" ).show();
       setTimeout(function() {
         $( "#message" ).hide();

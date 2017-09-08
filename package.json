@@ -1,16 +1,16 @@
 {
-  "name": "minesweeper_technical_test",
+  "name": "minesweeper_technical_example",
   "version": "0.0.1",
-  "description": "Minesweeper built in Pixi.js",
+  "description": "Minesweeper technical example built in Pixi.js",
   "author": "Michaél Adam Lockwood",
   "browser": {
     "game": "./src/js/game.js"
   },
   "browserify-shim": {},
   "devDependencies": {
+    "app-root-path": "^2.0.1",
     "browserify": "^14.4.0",
     "browserify-shim": "^3.8.14",
-    "canvas-prebuilt": "^1.6.5-prerelease.1",
     "electron": "^1.7.5",
     "expect.js": "^0.3.1",
     "floss": "^2.1.2",
@@ -22,16 +22,11 @@
     "grunt-contrib-less": "*",
     "grunt-contrib-uglify": "*",
     "grunt-contrib-watch": "*",
-    "grunt-mocha-istanbul": "^5.0.2",
-    "grunt-mocha-test": "^0.13.2",
+    "grunt-exec": "^3.0.0",
     "istanbul": "^0.4.5",
-    "jsdom": "^11.1.0",
-    "jsdom-global": "^3.0.2",
-    "jsdom-global-jquery": "^1.0.5",
     "load-grunt-tasks": "*",
     "mocha": "^3.5.0",
     "sinon": "^3.2.1",
-    "app-root-path": "^2.0.1",
     "stats.js": "*"
   },
   "dependencies": {
@@ -40,6 +35,7 @@
     "pixi.js": "^4.5.4"
   },
   "scripts": {
+    "start": "grunt",
     "test": "floss --path test/index.js --coveragePattern src/js/*.js --coverageSourceMaps --coverageHtmlReporter",
     "test-view": "floss --path test/index.js --coveragePattern src/js/*.js --coverageSourceMaps --coverageHtmlReporter --debug"
   }
