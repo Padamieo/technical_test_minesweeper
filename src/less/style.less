@@ -12,7 +12,6 @@ canvas{
   position: relative;
   display: block;
   margin: auto;
-  // width: 100vw;
 }
 
 #menu{
@@ -24,13 +23,26 @@ canvas{
   h1{
     text-align: center;
     color: #fff;
+    font-size: calc(3vh + 3vw );
   }
   .container{
-    display: block;
-    position: relative;
+    display: table;
     margin: auto;
+    .button{
+      display: block;
+      text-align: center;
+      span{
+        width: 100%;
+        box-sizing: border-box;
+      }
+    }
+
+  }
+
+  #footer{
+    font-size: calc(1vw + 1vh);
+    color: #fff;
     text-align: center;
-    overflow: auto;
   }
 }
 

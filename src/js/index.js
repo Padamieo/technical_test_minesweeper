@@ -1,6 +1,7 @@
 global.$ = global.jQuery = require('jquery');
 
 var app = {
+  current: 'menu',
   intialized: false,
   autoboot: true
 };
@@ -13,10 +14,27 @@ app.init = function () {
       global.game = require('game');
     }
     this.game = new global.game();
-    this.game.init( this.mobile ); // TODO: use init promise so we know when we are initialized
-    this.intialized = true;
-    app.prepActions();
+    ready = this.game.init( this.mobile ); // TODO: use init promise so we know when we are initialized
+    var localRef = this;
+    ready.then(function(result) {
+      localRef.intialized = true;
+      app.prepActions();
+
+      // $( "#menu" ).hide();
+      // $( "#canvas" ).show();
+      // localRef.game.mode = 'special';
+      // localRef.game.setupGame(2);
+
+    }, function(err) {
+
+    });
+    //app.menuScale();
+
   }
+};
+
+app.menuScale = function(){
+
 };
 
 app.vibrationSupport = function (){
@@ -28,17 +46,17 @@ app.prepActions = function(){
   var localRef = this;
   $( document ).on( "click", ".button", function() {
 
-    //TODO: probably use handlebars or something for generating, this is placeholder simple method
-    if(this.id === 'start1'){
+    if($(this).hasClass("game")){
       $( "#canvas" ).show();
+      var level = $(this).data("level");
+      var mode = $(this).data("mode");
+
+      if(mode != undefined){
+        localRef.game.mode = mode;
+      }
+
       $( "#menu" ).slideUp( "slow", function() {
-        localRef.game.setupGame(1);
-      });
-    }
-    if(this.id === 'start2'){
-      $( "#canvas" ).show();
-      $( "#menu" ).slideUp( "slow", function() {
-        localRef.game.setupGame(2);
+        localRef.game.setupGame(level);
       });
     }
 

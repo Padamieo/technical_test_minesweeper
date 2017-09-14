@@ -14,8 +14,10 @@ var game = function(){
   this.unrevealed = 0;
   this.bombRatio = 12;
   this.cascadeTime = 150;
+  this.defaultIndicator = 125;
   this.resultTimeOut = 1000;
   this.reRoute = '';
+  this.ratio = 1;
   this.localhost = "localhost:3000";
 
   this.init = function( mobile ){
@@ -30,7 +32,7 @@ var game = function(){
         localRef.vibration = app.vibrationSupport();
       }
 
-      localRef.canvas = new PIXI.Application(600, 800, {
+      localRef.canvas = new PIXI.Application(600, 600, {
         backgroundColor : 0x15932a
       });
 
@@ -49,15 +51,30 @@ var game = function(){
       });
 
       localRef.setupStats();
+      localRef.displaySize();
 
-      // TODO: could not figure out a perfect scaling solution, used css in end
-      //this.canvas.width  = window.innerWidth;
-      //this.canvas.view.height = window.innerHeight;
-
-      //this.canvas.stage.scale.set(1.2);
-      //this.canvas.renderer.resize(window.innerWidth, window.innerHeight);
+      //localRef.canvas.renderer.resize(window.innerWidth, window.innerHeight);
     });
     return intialized;
+  },
+
+  this.displaySize = function(){
+    this.ratio = 1;
+
+    if(window.innerHeight > 600 && window.innerWidth > 600){
+      var cal = (window.innerHeight / 600);
+      var h = window.innerHeight;
+      var w = cal*600;
+      if( w > window.innerWidth){
+        var cal = (window.innerWidth / 600);
+        var w = window.innerWidth;
+        //var h = cal*800;
+      }
+      //var w = window.innerWidth;
+      //console.log(cal);
+      this.ratio = cal;
+      this.canvas.renderer.resize(w, h );
+    }
   },
 
   this.setupStats = function(){
@@ -97,7 +114,6 @@ var game = function(){
     //document.body.oncontextmenu
     //document.oncontextmenu
     document.oncontextmenu = function(event) {
-      console.log(event.target.localName);
       if(event.target.localName === 'canvas'){
         event.preventDefault();
         return false;
@@ -154,7 +170,7 @@ var game = function(){
   },
 
   this.setupGame = function( level ){
-
+    
     if( level == undefined ){
       data = this.generateField();
     }else{
@@ -171,8 +187,11 @@ var game = function(){
     this.container = new PIXI.Container();
     this.generateSprites();
 
-    this.container.x = (this.canvas.renderer.width / 2) - (this.container.width / 2)+22.5;
-    this.container.y = (this.canvas.renderer.height / 2) - (this.container.height / 2);
+    this.container.scale.set(this.ratio);
+
+    this.container.x = (this.canvas.renderer.width/2) - (this.container.width / 2);
+    this.container.y = (this.canvas.renderer.height/2) - (this.container.height / 2);
+
     this.canvas.stage.interactive = true;
 
     this.canvas.stage.addChild(this.container);
@@ -189,11 +208,11 @@ var game = function(){
     this.indicator.beginFill(0xFFFFFF, 0);
     this.indicator.lineStyle(2, 0xFFFFFF, 1);
     this.indicatorData = {
-      size: 150,
+      size: this.defaultIndicator*this.ratio,
       endTime: 0,
       startTime: 0
     };
-    this.indicator.drawCircle ( (this.canvas.renderer.width / 2), (this.canvas.renderer.height / 2), this.indicatorData.size );
+    this.indicator.drawCircle( this.canvas.renderer.width/2, this.canvas.renderer.height/2, this.indicatorData.size*this.ratio );
     this.canvas.stage.addChild( this.indicator );
     this.indicator.alpha = 0;
   },
@@ -210,7 +229,7 @@ var game = function(){
 
     temp.x = c * 55;
     temp.y = r * 55;
-    temp.anchor.set(0.5);
+
     temp.interactive = true;
     temp.buttonMode = true;
     temp.animationSpeed = 0;
@@ -269,8 +288,8 @@ var game = function(){
     // var touchPosition = e.data.getLocalPosition(this.canvas.stage);
     // var x = touchPosition.x;
     // var y = touchPosition.y;
-    var x = sprite.x;
-    var y = sprite.y;
+    var x = (sprite.x+22.5)*this.ratio;
+    var y = (sprite.y+22.5)*this.ratio;
 
     if( input == "start" ){
 
@@ -312,7 +331,7 @@ var game = function(){
         this.reveal( sprite );
       }
       this.indicator.alpha = 0;
-      this.indicatorData.size = 100;
+      this.indicatorData.size = this.defaultIndicator*this.ratio;
       this.timer.destroy();
     }
 
@@ -363,9 +382,10 @@ var game = function(){
   this.calculateNeighbourSum = function( r, c ) {
     var neighbors = Array2D.neighbors(this.field, r, c );
     var sum = 0;
+    var fallback = ( this.mode == "default" ? 1 : 0 );
     for(var i = 0; i < neighbors.length; i++ ){
       if( neighbors[i] != undefined ){
-        sum = sum + (neighbors[i] <= 1 ? neighbors[i] : 1 );
+        sum = sum + (neighbors[i] <= 1 ? neighbors[i] : fallback );
       }
     }
     return sum;

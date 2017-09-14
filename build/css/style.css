@@ -22,13 +22,24 @@ canvas {
 #menu h1 {
   text-align: center;
   color: #fff;
+  font-size: calc(3vh + 3vw);
 }
 #menu .container {
-  display: block;
-  position: relative;
+  display: table;
   margin: auto;
+}
+#menu .container .button {
+  display: block;
   text-align: center;
-  overflow: auto;
+}
+#menu .container .button span {
+  width: 100%;
+  box-sizing: border-box;
+}
+#menu #footer {
+  font-size: calc(1vw + 1vh);
+  color: #fff;
+  text-align: center;
 }
 #canvas {
   display: none;
@@ -65,7 +76,7 @@ canvas {
   -moz-transition: -moz-box-shadow 0.1s ease-in-out;
   -o-transition: -o-box-shadow 0.1s ease-in-out;
   transition: box-shadow 0.1s ease-in-out;
-  font-size: 40px;
+  font-size: calc(2.5vw + 2.5vh);
   color: #fff;
   margin-top: 10px;
   margin-bottom: 30px;
