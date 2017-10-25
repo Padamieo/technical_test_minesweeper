@@ -21,4 +21,4 @@ describe('Basics', function (){
 
 require('./app');
 
-require('./game');
+//require('./game');

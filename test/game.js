@@ -10,6 +10,7 @@ describe('game.js', function() {
   beforeEach(function() {
       document.body.innerHTML = '';
       g = new game();
+      app = {};
   });
 
   describe('init', function() {
@@ -20,11 +21,15 @@ describe('game.js', function() {
         callsDisable++;
       });
 
+      callsVibSup = 0;
+      app.vibrationSupport = function(){};
+      sinon.stub( app, 'vibrationSupport').callsFake(function( ){
+        callsVibSup++;
+      });
+
       var appRoot = require('app-root-path');
       g.reRoute = appRoot+'/src/';
-
     });
-
 
     it('Unable to find resources', function(done){
       g.reRoute = '';
@@ -62,12 +67,12 @@ describe('game.js', function() {
 
     it('mobile Identifies and load correctly', function(done){
       var mobile = true;
-      var ready = g.init( mobile );
-      ready.then(function(result) {
+      var readyInit = g.init( mobile );
+      readyInit.then(function(result) {
 
         expect( g.mobile ).eql( mobile );
         expect( callsDisable ).eql( 0 );
-        //expect( callsVibrateS ).eql( 1 );
+        expect( callsVibSup ).eql( 1 );
 
         done();
       }, function(err) {
@@ -805,12 +810,13 @@ describe('game.js', function() {
 
   describe('showResult', function() {
 
-    before(function(){
-      app = {};
-      app.menuReset = function(){
-        v++;
-      };
+    beforeEach(function(){
+      app.menuReset = function(){};
       v = 0;
+      sinon.stub( app, 'menuReset').callsFake(function( ){
+        v++;
+      });
+
     });
 
     it("show user won return to menu", function( done ){
@@ -829,11 +835,11 @@ describe('game.js', function() {
   describe('winCondition', function() {
 
     beforeEach(function(){
-      app = {};
-      app.menuReset = function(){
-        v++;
-      };
+      app.menuReset = function(){};
       v = 0;
+      sinon.stub( app, 'menuReset').callsFake(function( ){
+        v++;
+      });
       g.revealed = 10;
       g.unrevealed = 10;
       g.resultTimeOut = 10;

@@ -1,40 +1,31 @@
 global.$ = global.jQuery = require('jquery');
+game = require('./game');
 
 var app = {
   current: 'menu',
-  intialized: false,
-  autoboot: true
+  intialized: false
 };
 
 app.init = function () {
-  if(this.autoboot){
+  if(global.autoboot === undefined){
     this.mobile = /Mobi/.test(navigator.userAgent);
     global.app = this;
-    if( global.game == undefined ){
-      global.game = require('game');
-    }
-    this.game = new global.game();
-    ready = this.game.init( this.mobile ); // TODO: use init promise so we know when we are initialized
-    var localRef = this;
-    ready.then(function(result) {
-      localRef.intialized = true;
-      app.prepActions();
-
-      // $( "#menu" ).hide();
-      // $( "#canvas" ).show();
-      // localRef.game.mode = 'special';
-      // localRef.game.setupGame(2);
-
-    }, function(err) {
-
-    });
-    //app.menuScale();
-
+    this.game = new game();
+    ready = this.game.init( this.mobile );
+    app.gameIntialized( ready );
+    return ready;
   }
 };
 
-app.menuScale = function(){
-
+app.gameIntialized = function( promise ){
+  var localRef = this;
+  promise.then(function(result) {
+    localRef.intialized = true;
+    app.prepActions();
+  }, function(err) {
+    console.log(err);
+  });
+  return promise;
 };
 
 app.vibrationSupport = function (){

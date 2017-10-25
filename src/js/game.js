@@ -2,7 +2,7 @@ PIXI = require("pixi.js");
 stats = require("stats.js");
 Array2D = require("array2d");
 
-var game = function(){
+var mainGame = function(){
 
   this.gridSize = 9;
   this.flagHoldDuration = 500;
@@ -20,7 +20,12 @@ var game = function(){
   this.ratio = 1;
   this.localhost = "localhost:3000";
 
+  this.test = function(){
+    console.log("FUCK YOU");
+  };
+
   this.init = function( mobile ){
+    console.log("FUCK YOU DO NOT CALL");
     var localRef = this;
     var intialized = new Promise(function(resolve, reject) {
 
@@ -170,7 +175,7 @@ var game = function(){
   },
 
   this.setupGame = function( level ){
-    
+
     if( level == undefined ){
       data = this.generateField();
     }else{
@@ -468,4 +473,4 @@ var game = function(){
 
 };
 
-module.exports = game;
+module.exports = mainGame;

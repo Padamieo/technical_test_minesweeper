@@ -36,21 +36,11 @@ var resources = function( ){
     return base;
   },
 
-  this.something = function(){
-    console.log("something");
-  },
-
   this.loadSpriteSheet = function(){
     var localRef = this;
     var spriteSheetPromise = new Promise(function(resolve, reject) {
       var loader = new PIXI.loaders.Loader();
-      // loader.add('levels', 'levels/levels.json', function (e) {
-      //   localRef.levels = e.data;
-      // });
       loader.add('placeholder.png', '../src/img/spritesheet.json');
-      // loader.add('levels', '../src/levels/levels.json', function (e) {
-      //   localRef.levels = e.data;
-      // });
       loader.on("complete", resolve );
       loader.load();
     });
@@ -71,6 +61,23 @@ var resources = function( ){
     //   delete loader.resources.data;
     //   delete loader.resources;
     // }
+  },
+
+  this.setupFakeGlobalGame = function( setOutcome ){
+    callsInit = 0;
+    global.game = function(){
+      this.init = function(){
+        callsInit++;
+        var fakePromise = new Promise(function(resolve, reject) {
+          if(setOutcome == undefined){
+            resolve();
+          }else{
+            reject();
+          }
+        });
+        return fakePromise;
+      }
+    };
   }
 
 };

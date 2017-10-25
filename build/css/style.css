@@ -18,6 +18,9 @@ canvas {
   display: block;
   position: relative;
   overflow: auto;
+  background: url('../img/background.jpg');
+  background-size: cover;
+  background-position: center;
 }
 #menu h1 {
   text-align: center;
