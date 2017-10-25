@@ -21,11 +21,11 @@ var mainGame = function(){
   this.localhost = "localhost:3000";
 
   this.test = function(){
-    console.log("FUCK YOU");
+    console.log("DO NOT CALL");
   };
 
   this.init = function( mobile ){
-    console.log("FUCK YOU DO NOT CALL");
+    console.log("SHOULD NOT CALL");
     var localRef = this;
     var intialized = new Promise(function(resolve, reject) {
 
